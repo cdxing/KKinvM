@@ -16,7 +16,12 @@
  * \Incortate Yang's  event plane information to reconstruct Phi flow
  *
  * \author Ding Chen
- * \data August 3, 2019
+ * \date August 3, 2019
+ *
+ * \Update to analyze Run18 3p85 GeV 26.5GeV FXT analysis
+ *
+ * \author Ding Chen
+ * \date Feb 22, 2020
  */
 
 // C++ headers
@@ -167,7 +172,7 @@ private:
 };
 
 //=============================== Main Function ==============================================
-void PhiFlowAnalyzer(const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
+void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
                       TString outFile = "test")
 {
   std::cout << "Hi! Lets do some physics, Master!" << std::endl;
@@ -336,7 +341,7 @@ void PhiFlowAnalyzer(const Char_t *inFile = "../files/PicoDst/st_physics_1614003
     // loop for the trigger ids and see if any == 1
     for(int i=0; i < triggerIDs.size(); i++)
       {
-        if(triggerIDs[i] == 1) b_bad_trig = false;
+        if(triggerIDs[i] == 620802) b_bad_trig = false; // 620802: 3p85 HLT
       }
 
     //=========================== End Trigger Slection ===========================================
@@ -348,7 +353,7 @@ void PhiFlowAnalyzer(const Char_t *inFile = "../files/PicoDst/st_physics_1614003
     TVector3 v3D_vtx  = event->primaryVertex();
     d_zvtx = pVtx.z();
     h_vtx -> Fill(d_zvtx);
-    bool b_bad_zvtx   = ((d_zvtx < 210.0) || (d_zvtx > 212.0));
+    bool b_bad_zvtx   = ((d_zvtx < 199.0) || (d_zvtx > 202.0)); //3p85
     //======================== END Z-VTX Selection =================================================
 
     bool b_bad_evt  = b_bad_zvtx || b_bad_trig ;
