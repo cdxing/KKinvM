@@ -164,9 +164,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TTree *  t_K        = new TTree("t_K","t_K");
   t_K         -> Branch("Kaoninfo",&Kaoninfo);
 
-  double d_PI_m2   = 0.019479835;
-  double d_PRO_m2  = 0.880354;
+  double d_PI_m2   = 0.019479955;
   double d_K_m2    = 0.24371698;
+  double d_PRO_m2  = 0.8803545;
 
   TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
   hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
@@ -190,7 +190,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH2D *  h2_m2_QA_pT_1 = new TH2D("h2_m2_QA_pT_1","h2_m2_QA_pT_1",5000,-5.0,5.0,5000,-2.0,1.6);
 
   TH1D *  h_mult     = new TH1D("h_mult","h_mult",1600,0.0,1600.0);
-  TH2D *  h2_mult     = new TH2D("h2_mult","h2_mult",400,0.0,400.0,100000,0.,100000.);//test
+  // TH2D *  h2_mult     = new TH2D("h2_mult","h2_mult",400,0.0,400.0,100000,0.,100000.);//test
 
   TH1D *  h_DCA_r    = new TH1D("h_DCA_r","h_DCA_r",100,0.0,2.0);
   TH1D *  h_DCA_PRO    = new TH1D("h_DCA_PRO","h_DCA_PRO",100,0.0,2.0);
@@ -228,8 +228,8 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH2D *  h2_TOF_nsigma_K_vs_PRO = new TH2D("h2_TOF_nsigma_K_vs_PRO",  "h2_TOF_nsigma_K_vs_PRO",100,0.0,10.0,100,0.0,10.0);
   TH2D *  h2_TPC_nsigma_K_vs_PRO = new TH2D("h2_TPC_nsigma_K_vs_PRO",  "h2_TPC_nsigma_K_vs_PRO",100,0.0,10.0,100,0.0,10.0);
 
-  TH1D *  h_PHI_decay_length     = new TH1D("h_PHI_decay_length","h_PHI_decay_length",100,0,10.0);
-  TH1D *  h_dip_angle            = new TH1D("h_dip_angle","h_dip_angle",1000,-4,4);
+  // TH1D *  h_PHI_decay_length     = new TH1D("h_PHI_decay_length","h_PHI_decay_length",100,0,10.0);
+  // TH1D *  h_dip_angle            = new TH1D("h_dip_angle","h_dip_angle",1000,-4,4);
 
   // Histogramming End
 
@@ -357,6 +357,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
       h2_m2_QA_pq_1   ->Fill(d_mom0/(picoTrack->charge()),mass2);
       h2_m2_QA_pT_1   ->Fill(d_pT0/(picoTrack->charge()),mass2);
+      h_pT            ->Fill(d_pT0);
 
       nTrkvsCuts++;
 
@@ -688,188 +689,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     }
     //=================== END Primary Track Loop =================================================
 
-    //======================= Invariant Mass Nested Primary Track Loop ===========================
-
-    vector<StPicoTrack *> v_pri_tracks0 = v_pri_tracks_pl;
-    vector<StPicoTrack *> v_pri_tracks1 = v_pri_tracks_mi;
-
-    for(int i = 0; i < v_pri_tracks0.size();i++)
-    {
-      StPicoTrack * picoTrack0 = v_pri_tracks0[i];
-      if(!picoTrack0) continue;
-
-      double d_TPCnSigmaPion0   = fabs(picoTrack0->nSigmaPion());
-      double d_TPCnSigmaProton0 = fabs(picoTrack0->nSigmaProton());
-      double d_TPCnSigmaKaon0   = fabs(picoTrack0->nSigmaKaon());
-
-      bool b_PI0  = fabs(d_TPCnSigmaPion0)   < d_SigmaCutLevel;
-      bool b_PRO0 = fabs(d_TPCnSigmaProton0) < d_SigmaCutLevel;
-      bool b_K0   = fabs(d_TPCnSigmaKaon0)   < d_SigmaCutLevel;
-
-      if( b_PI0
-         && (d_TPCnSigmaPion0 < d_TPCnSigmaProton0)
-         && (d_TPCnSigmaPion0 < d_TPCnSigmaKaon0) )
-        { b_PI0 = true; b_PRO0 = false;}// b_K0 = false;}
-
-      if( b_PRO0
-         && (d_TPCnSigmaProton0 < d_TPCnSigmaPion0)
-         && (d_TPCnSigmaProton0 < d_TPCnSigmaKaon0) )
-        { b_PRO0 = true; b_PI0 = false;}// b_K0 = false;}
-
-      if( b_K0
-         && (d_TPCnSigmaKaon0 < d_TPCnSigmaProton0)
-         && (d_TPCnSigmaKaon0 < d_TPCnSigmaPion0) )
-        { b_K0 = true; b_PRO0 = false; b_PI0 = false;}
-
-      double d_M0       = -9999.0;
-      double d_px0      = picoTrack0->pMom().x();
-      double d_py0      = picoTrack0->pMom().y();
-      double d_pz0      = picoTrack0->pMom().z();
-      double d_pT0      = picoTrack0->pPt();
-      double d_mom0     = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
-      StPicoBTofPidTraits *trait = NULL;
-      if(picoTrack0->isTofTrack()) trait = dst->btofPidTraits(picoTrack0->bTofPidTraitsIndex());
-      double d_tofBeta0 = -999;
-      if(trait) d_tofBeta0 = trait->btofBeta();
-
-      double d_charge0  = picoTrack0->charge();
-      double d_mc0      = d_mom0/d_charge0;
-      double d_eta0     = picoTrack0->pMom().Eta();
-      double d_phi0     = picoTrack0->pMom().Phi();
-
-      TVector3 v3D_obj_p0 = picoTrack0->pMom();
-
-      StPicoPhysicalHelix    trackhelix0 = picoTrack0->helix(B);
-
-      if(b_PRO0)
-        {
-          d_M0 = d_PRO_m;
-        }
-      else if(b_PI0)
-        {
-          d_M0 = d_PI_m;
-        }
-      else if(b_K0)
-        {
-          d_M0 = d_K_m;
-        }
-
-      for(int j = 0; j < v_pri_tracks1.size(); j++)
-      {
-        StPicoTrack * picoTrack1 = v_pri_tracks1[j];
-
-        if(!picoTrack1 || (picoTrack0->id() == picoTrack1->id())) continue;
-
-        double d_TPCnSigmaPion1   = fabs(picoTrack1->nSigmaPion());
-        double d_TPCnSigmaProton1 = fabs(picoTrack1->nSigmaProton());
-        double d_TPCnSigmaKaon1   = fabs(picoTrack1->nSigmaKaon());
-
-        bool b_PI1  = fabs(d_TPCnSigmaPion1) < d_SigmaCutLevel;
-        bool b_PRO1 = fabs(d_TPCnSigmaProton1) < d_SigmaCutLevel;
-        bool b_K1   = fabs(d_TPCnSigmaKaon1) < d_SigmaCutLevel;
-
-        if( b_PI1
-           && (d_TPCnSigmaPion1 < d_TPCnSigmaProton1)
-           && (d_TPCnSigmaPion1 < d_TPCnSigmaKaon1) )
-          { b_PI1 = true; b_PRO1 = false;}// b_K1 = false;}
-
-        if( b_PRO1
-           && (d_TPCnSigmaProton1 < d_TPCnSigmaPion1)
-           && (d_TPCnSigmaProton1 < d_TPCnSigmaKaon1) )
-          { b_PRO1 = true; b_PI1 = false;}// b_K1 = false;}
-
-        if( b_K1
-           && (d_TPCnSigmaKaon1 < d_TPCnSigmaProton1)
-           && (d_TPCnSigmaKaon1 < d_TPCnSigmaPion1) )
-          { b_K1 = true; b_PRO1 = false; b_PI1 = false;}
-
-        double d_M1 = -9999.0;
-
-        if(b_PRO1) d_M1 = d_PRO_m;
-        else if(b_PI1)  d_M1 = d_PI_m;
-        else if(b_K1)   d_M1 = d_K_m;
-
-        double d_px1      = picoTrack1->pMom().x();
-        double d_py1      = picoTrack1->pMom().y();
-        double d_pz1      = picoTrack1->pMom().z();
-        double d_pT1      = picoTrack1->pPt();
-        double d_mom1     = sqrt(d_pT1*d_pT1 + d_pz1*d_pz1);
-        StPicoBTofPidTraits *trait = NULL;
-        if(picoTrack1->isTofTrack()) trait = dst->btofPidTraits(picoTrack1->bTofPidTraitsIndex());
-        double d_tofBeta1 = -999;
-        if(trait) d_tofBeta1 = trait->btofBeta();
-
-        double d_charge1    = picoTrack1->charge();
-
-        double d_mc1        = d_mom1/d_charge1;
-        double d_eta1       = picoTrack1->pMom().Eta();
-        double d_phi1       = picoTrack1->pMom().Phi();
-
-        TVector3 v3D_obj_p1 = picoTrack1->pMom();
-
-        if(d_charge0 == d_charge1) continue;
-        bool b_PHI    = b_K0 && b_K1;
-        bool b_RHO    = b_PI0 && b_PI1;
-        bool b_K0S    = b_RHO;
-
-        bool b_LAMBDA = (b_PRO0 && b_PI1)||(b_PRO1 && b_PI0);
-        bool b_V0 = b_PHI || b_RHO || b_LAMBDA;
-        if(!b_V0) continue;
-
-        StPicoPhysicalHelix    trackhelix1 = picoTrack1->helix(B);
-
-        pair<double,double> pairLengths = trackhelix0.pathLengths(trackhelix1);
-
-        TVector3 v3D_p_daughter0 = trackhelix0.momentumAt(pairLengths.first, d_MagField*kilogauss);
-        TVector3 v3D_p_daughter1 = trackhelix1.momentumAt(pairLengths.second, d_MagField*kilogauss);
-
-        TVector3 v3D_x_daughter0 = trackhelix0.at(pairLengths.first);
-        TVector3 v3D_x_daughter1 = trackhelix1.at(pairLengths.second);
-
-        double d_dca_products =(v3D_x_daughter0-v3D_x_daughter1).Mag();
-
-        if(d_dca_products > d_cut_dca_daughters_lam) b_LAMBDA = false;
-        if(d_dca_products > d_cut_dca_daughters_k0s) b_RHO    = false;
-
-        TVector3 v3D_x_mother    = (v3D_x_daughter0+v3D_x_daughter1)*0.5;
-        TVector3 v3D_xvec_decayl = v3D_x_mother - v3D_vtx;
-        TVector3 v3D_p_mother    = v3D_p_daughter0+v3D_p_daughter1;
-
-        double d_pmom = v3D_xvec_decayl.Dot(v3D_p_mother);
-
-        double d_dca_mother = sqrt(v3D_xvec_decayl.Mag2() - (d_pmom*d_pmom/v3D_p_mother.Mag2()) );
-
-        if(d_dca_mother > d_cut_dca_mother_lam) b_LAMBDA = false;
-        if(d_dca_mother > d_cut_dca_mother_k0s) b_RHO    = false;
-
-        double d_mother_decay_length =  v3D_xvec_decayl.Mag();
-
-        if(d_mother_decay_length < d_cut_mother_decay_length_lam) b_LAMBDA = false;
-        if(d_mother_decay_length < d_cut_mother_decay_length_k0s) b_K0S    = false;
-        if(d_mother_decay_length > d_cut_mother_decay_length_RHO) b_RHO    = false;
-
-        double d_E0 = sqrt(v3D_obj_p0.Mag2()+d_M0*d_M0);
-        double d_E1 = sqrt(v3D_obj_p1.Mag2()+d_M1*d_M1);
-        double d_inv_m = sqrt(d_M0*d_M0
-                              +d_M1*d_M1
-                              +2.0*d_E0*d_E1
-                              -2.0*(v3D_obj_p0.Dot(v3D_obj_p1)) );
-
-        if(d_mother_decay_length > d_cut_mother_decay_length_PHI) b_PHI    = false;
-        // Decay Length Cut
-
-        double d_dip_angle = TMath::ACos((d_pT0*d_pT1+d_pz0*d_pz1) / (d_mom0*d_mom1) );
-        if(d_dip_angle < 0.04) b_PHI = false;
-        // Dip Angle Cut
-
-        double d_mother_m = -9999;
-
-        if(b_PHI) h_prim_inv_m_PHI    -> Fill(d_inv_m);
-
-      }
-    }
-    //=================== END Invariant Mass Nested Primary Track Loop ===========================
-
     i_event++;
     h_evt -> Fill(0.5);
   }
@@ -883,10 +702,10 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
   h_evt      -> Write();
   h_vtx      -> Write();
-  // h_pT       -> Write();
-  h2_dEdx_PI_pq -> Write();
-  h2_dEdx_PRO_pq -> Write();
-  h2_dEdx_K_pq -> Write();
+  h_pT       -> Write();
+  // h2_dEdx_PI_pq -> Write();
+  // h2_dEdx_PRO_pq -> Write();
+  // h2_dEdx_K_pq -> Write();
   h2_dEdx_All_pq->Write();
   h2_m2_QA_pq->Write();
   h2_m2_QA_pT->Write();
@@ -895,7 +714,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   h_DCA_PRO    -> Write();
   h_DCA_PIM    -> Write();
   h_DCA_mother_r    -> Write();
-  h_rapidity_pm -> Write();
+  // h_rapidity_pm -> Write();
   // h2_mT_rapidity_pm -> Write();
 
   h_nodecaylength_cut_inv_m_PHI -> Write();
@@ -917,7 +736,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   // h2_TOF_nsigma_K_vs_PRO -> Write();
   h2_TPC_nsigma_K_vs_PRO -> Write();
 
-  h_PHI_decay_length     -> Write();
-  h_dip_angle   -> Write();
+  // h_PHI_decay_length     -> Write();
+  // h_dip_angle   -> Write();
 }
 //============================= End Main Function  ===============================================

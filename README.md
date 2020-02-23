@@ -1,5 +1,7 @@
 # KKinvM
 Invariant mass of phi meson (K+K- pairs) in normal events and mixed events
+- `RunAnalyzer.C` is used to load library for `PicoDstAnalyzer2.C` .
+- `PicoDstAnalyzer2.C` is used to built Kaon TTree.
 
 # 1. Setup/ Sourcing
 Login to BNL RACF computer and get the source code:
