@@ -58,6 +58,60 @@
 #include "StPicoEvent/StPicoBTofPidTraits.h"
 #include "StPicoEvent/StPicoTrackCovMatrix.h"
 
+class st_track : public TObject
+{
+public:
+    st_track(){ reset(); }
+    virtual ~st_track(){}
+    bool b_pos_charge;
+
+    bool b_PI;
+    bool b_PRO;
+    bool b_K;
+
+    unsigned int runNumber;
+    unsigned int eventNumber;
+
+    double MagField;
+
+    float px;
+    float py;
+    float pz;
+
+    float x_vtx;
+    float y_vtx;
+    float z_vtx;
+
+    StPicoPhysicalHelix trackhelix;
+
+    void reset()
+    {
+      b_pos_charge = 0;
+
+      b_PI  = 0;
+      b_PRO = 0;
+      b_K   = 0;
+
+      runNumber   = 0;
+      eventNumber = 0;
+
+      MagField = 0.0;
+
+      px = 0.0;
+      py = 0.0;
+      pz = 0.0;
+
+      x_vtx = 0.0;
+      y_vtx = 0.0;
+      z_vtx = 0.0;
+
+    }
+
+
+private:
+    ClassDef(st_track,1);
+};
+
 class st_K : public TObject
 {
 public:
@@ -71,6 +125,7 @@ public:
     unsigned int nGoodTracks;
     unsigned int nTrkvsCuts;
 
+
     float px;
     float py;
     float pz;
@@ -83,6 +138,7 @@ public:
     float dEdxFit;
     float d_dEdxTru;
     float DCA_r;
+
 
     float d_TPCnSigmaKaon;
     float d_TOFnSigmaKaon;
@@ -159,10 +215,13 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   std::vector <unsigned int> triggerIDs;
 
   st_K Kaoninfo;
-  // st_track trackinfo;
+  st_track trackinfo;
 
   TTree *  t_K        = new TTree("t_K","t_K");
   t_K         -> Branch("Kaoninfo",&Kaoninfo);
+
+  TTree *  t_tracks   = new TTree("t_tracks","t_tracks");
+  t_tracks    -> Branch("trackinfo",&trackinfo);
 
   double d_PI_m2   = 0.019479835;
   double d_PRO_m2  = 0.880354;
@@ -202,6 +261,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH1D *  h_K_obj_DCA_r  = new TH1D("h_K_obj_DCA_r","h_K_obj_DCA_r",200,0.0,3.0);
   TH1D *  h_K_diff_DCA_r = new TH1D("h_K_diff_DCA_r","h_K_diff_DCA_r",400,-3.0,3.0);
 
+
   TH1D *  h_rapidity_pm = new TH1D("h_rapidity_pm","h_rapidity_pm",100,-2.0,2.0);
   TH2D *  h2_mT_rapidity_pm = new TH2D("h2_mT_rapidity_pm","h2_mT_rapidity_pm",100,0.0,1.0,20,-2.05,-0.05);
 
@@ -222,6 +282,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_PI  = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_PI", "h2_TOF_nsigma_vs_TPC_nsigma_PI",100,0.0,10.0,100,0.0,10.0);
   TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_PRO = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_PRO","h2_TOF_nsigma_vs_TPC_nsigma_PRO",100,0.0,10.0,100,0.0,10.0);
   TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_K   = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_K",  "h2_TOF_nsigma_vs_TPC_nsigma_K",100,0.0,10.0,100,0.0,10.0);
+
 
   TH2D *  h2_TOF_nsigma_K_vs_PI  = new TH2D("h2_TOF_nsigma_K_vs_PI",   "h2_TOF_nsigma_K_vs_PI",100,0.0,10.0,100,0.0,10.0);
   TH2D *  h2_TPC_nsigma_K_vs_PI  = new TH2D("h2_TPC_nsigma_K_vs_PI",   "h2_TPC_nsigma_K_vs_PI",100,0.0,10.0,100,0.0,10.0);
@@ -401,6 +462,140 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     double d_cut_mother_decay_length_RHO = 0.5; // must be LESS    than this
     double d_cut_mother_decay_length_PHI = 0.5; // must be LESS    than this
     //======================== END Track Settings ================================================
+
+    //========================= Preliminary Track Loop ===========================================
+    vector<StPicoTrack *> v_tracks;
+    vector<StPicoTrack *> v_tracks_pl;
+    vector<StPicoTrack *> v_tracks_mi;
+    int index = 0;
+    for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
+    {
+      StPicoTrack *picoTrack = dst->track(iTrk);
+      // Retrieve i-th Pico Track
+
+      if(picoTrack == NULL)       continue;
+      // PicoTrack Cut
+
+      if(!picoTrack->isPrimary())  continue;
+      // Primary Track Cut
+
+      StPicoBTofPidTraits *trait = NULL;
+      if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
+
+      unsigned short nHits = picoTrack->nHits();
+      if(nHits < i_Nhits_min)     continue;
+      // Minimum Hits Cut
+
+      double d_TPCnSigmaPion   = fabs(picoTrack->nSigmaPion());
+      double d_TPCnSigmaProton = fabs(picoTrack->nSigmaProton());
+      double d_TPCnSigmaKaon   = fabs(picoTrack->nSigmaKaon());
+
+      double d_tofBeta0        = -999;
+      if(trait) d_tofBeta0 = trait->btofBeta();
+
+      bool b_PI  = fabs(d_TPCnSigmaPion)   < d_SigmaCutLevel;
+      bool b_PRO = fabs(d_TPCnSigmaProton) < d_SigmaCutLevel;
+      bool b_K   = fabs(d_TPCnSigmaKaon)   < d_SigmaCutLevel;
+      // PID Cuts
+
+      if( b_PI
+         && (d_TPCnSigmaPion < d_TPCnSigmaProton)
+         && (d_TPCnSigmaPion < d_TPCnSigmaKaon) )
+        { b_PI = true; b_PRO = false;}// b_K = false;}
+
+      if( b_PRO
+         && (d_TPCnSigmaProton < d_TPCnSigmaPion)
+         && (d_TPCnSigmaProton < d_TPCnSigmaKaon) )
+        { b_PRO = true; b_PI = false;}// b_K = false;}
+
+      if( b_K
+         && (d_TPCnSigmaKaon < d_TPCnSigmaProton)
+         && (d_TPCnSigmaKaon < d_TPCnSigmaPion) )
+        { b_K = true; b_PRO = false; b_PI = false;}
+
+      double d_charge  = picoTrack->charge();
+
+      if(!(b_PI||b_PRO||b_K)) continue;
+      // Pion Proton Kaon Cut
+
+      if(!b_K)                continue;
+      // Kaon Cut
+
+      double d_px0      = picoTrack->gMom().x();
+      double d_py0      = picoTrack->gMom().y();
+      double d_pz0      = picoTrack->gMom().z();
+      double d_pT0      = picoTrack->gPt();
+      double d_mom0     = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
+
+      if( d_pT0<d_pT_min)     continue;
+      // pT Min Cut
+
+      if( d_mom0<d_mom_min)   continue;
+      // Momentum Min Cut
+
+      h2_TPC_nsigma_K_vs_PI  -> Fill(d_TPCnSigmaKaon,d_TPCnSigmaPion);
+      h2_TPC_nsigma_K_vs_PRO -> Fill(d_TPCnSigmaKaon,d_TPCnSigmaProton);
+
+      bool b_bad_dEdx      = false;
+      bool b_bad_tracking  = false;
+
+      bool b_bad_ToF       = false;
+
+      b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
+      b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.52);
+
+      bool b_bad_track     = b_bad_dEdx || b_bad_tracking || b_bad_ToF;
+      if(b_bad_track) continue;
+      // Track QA, TOF Cuts
+
+      StPicoPhysicalHelix trackhelix = picoTrack->helix(B);
+      double helixpathl              = trackhelix.pathLength(v3D_vtx, false);
+      TVector3 v3D_dca               = trackhelix.at(helixpathl)-v3D_vtx;
+      double d_helix_DCA_r           = v3D_dca.Mag();
+
+      h_DCA_r -> Fill(d_helix_DCA_r);
+
+      double d_DCA_r_cut     = 1.0;
+      if(b_PRO) {d_DCA_r_cut = d_PRO_daughter_DCA; h_DCA_PRO->Fill(d_helix_DCA_r);  }
+      if(b_PI)  {d_DCA_r_cut = d_PI_daughter_DCA; h_DCA_PIM->Fill(d_helix_DCA_r);  }
+      if(b_K) d_DCA_r_cut    = 1.0;
+
+      if(d_helix_DCA_r > d_DCA_r_cut) continue;
+      // DCA Cut
+
+      if(d_charge > 0.0)      v_tracks_pl.push_back(picoTrack);
+      else if(d_charge < 0.0) v_tracks_mi.push_back(picoTrack);
+      v_tracks.push_back(picoTrack);
+
+      trackinfo.reset();
+      if(d_charge > 0.0)      trackinfo.b_pos_charge = true;
+      else if(d_charge < 0.0) trackinfo.b_pos_charge = false;
+      else continue;
+      // Charge Cut
+
+      if(b_PI)  trackinfo.b_PI  = true;
+      if(b_PRO) trackinfo.b_PRO = true;
+      if(b_K)   trackinfo.b_K   = true;
+
+      trackinfo.runNumber   = runNumber;
+      trackinfo.eventNumber = eventNumber;
+
+      trackinfo.MagField = d_MagField;
+
+      trackinfo.px = d_px0;
+      trackinfo.py = d_py0;
+      trackinfo.pz = d_pz0;
+
+      trackinfo.x_vtx = v3D_vtx.x();
+      trackinfo.y_vtx = v3D_vtx.y();
+      trackinfo.z_vtx = v3D_vtx.z();
+
+      trackinfo.trackhelix = trackhelix;
+
+      t_tracks -> Fill();
+      index++;
+    }
+    //======================== END Preliminary Track Loop ========================================
 
     //======================= Primary Track Loop =================================================
     vector<StPicoTrack *> v_pri_tracks;
@@ -688,6 +883,220 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     }
     //=================== END Primary Track Loop =================================================
 
+    //======================= END Track Analysis =================================================
+
+    //======================= Invariant Mass Nested Track Loop ===================================
+    // if(v_tracks_pl.size() <= 0) continue;
+    // if(v_tracks_mi.size() <= 0) continue;
+    //Preliminary track Cuts
+
+    vector<StPicoTrack *> v_tracks0 = v_tracks_pl;
+    vector<StPicoTrack *> v_tracks1 = v_tracks_mi;
+
+    for(int i = 0; i < v_tracks0.size();i++)
+    {
+      StPicoTrack * picoTrack0 = v_tracks0[i];
+      if(!picoTrack0) continue;
+      // picoTrack0 Cut
+
+      double d_TPCnSigmaPion0   = fabs(picoTrack0->nSigmaPion());
+      double d_TPCnSigmaProton0 = fabs(picoTrack0->nSigmaProton());
+      double d_TPCnSigmaKaon0   = fabs(picoTrack0->nSigmaKaon());
+
+      bool b_PI0  = fabs(d_TPCnSigmaPion0)   < d_SigmaCutLevel;
+      bool b_PRO0 = fabs(d_TPCnSigmaProton0) < d_SigmaCutLevel;
+      bool b_K0   = fabs(d_TPCnSigmaKaon0)   < d_SigmaCutLevel;
+
+      if( b_PI0
+         && (d_TPCnSigmaPion0 < d_TPCnSigmaProton0)
+         && (d_TPCnSigmaPion0 < d_TPCnSigmaKaon0) )
+        { b_PI0 = true; b_PRO0 = false;}// b_K0 = false;}
+
+      if( b_PRO0
+         && (d_TPCnSigmaProton0 < d_TPCnSigmaPion0)
+         && (d_TPCnSigmaProton0 < d_TPCnSigmaKaon0) )
+        { b_PRO0 = true; b_PI0 = false;}// b_K0 = false;}
+
+      if( b_K0
+         && (d_TPCnSigmaKaon0 < d_TPCnSigmaProton0)
+         && (d_TPCnSigmaKaon0 < d_TPCnSigmaPion0) )
+        { b_K0 = true; b_PRO0 = false; b_PI0 = false;}
+
+      double d_M0       = -9999.0;
+      double d_px0      = picoTrack0->gMom().x();
+      double d_py0      = picoTrack0->gMom().y();
+      double d_pz0      = picoTrack0->gMom().z();
+      double d_pT0      = picoTrack0->gPt();
+      double d_mom0     = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
+      StPicoBTofPidTraits *trait = NULL;
+      if(picoTrack0->isTofTrack()) trait = dst->btofPidTraits(picoTrack0->bTofPidTraitsIndex());
+      double d_tofBeta0 = -999;
+      if(trait) d_tofBeta0 = trait->btofBeta();
+
+      double d_charge0  = picoTrack0->charge();
+      double d_mc0      = d_mom0/d_charge0;
+      double d_eta0     = picoTrack0->gMom().Eta();
+      double d_phi0     = picoTrack0->gMom().Phi();
+
+      StPicoPhysicalHelix    trackhelix0 = picoTrack0->helix(B);
+
+      if(b_PRO0)
+        {
+          d_M0 = d_PRO_m;
+          if((d_tofBeta0 != 0.0) && (d_charge0 != 0.0)) h2_dEdx_PRO_pq -> Fill(d_mc0,1.0/d_tofBeta0);
+        }
+      else if(b_PI0)
+        {
+          d_M0 = d_PI_m;
+          if((d_tofBeta0 != 0.0) && (d_charge0 != 0.0)) h2_dEdx_PI_pq  -> Fill(d_mc0,1.0/d_tofBeta0);
+        }
+      else if(b_K0)
+        {
+          d_M0 = d_K_m;
+          if((d_tofBeta0 != 0.0) && (d_charge0 != 0.0)) h2_dEdx_K_pq   -> Fill(d_mc0,1.0/d_tofBeta0);
+        }
+
+      //================= Loop over Charge minus tracks ==========================================
+      for(int j = 0; j < v_tracks1.size(); j++)
+      {
+        StPicoTrack * picoTrack1 = v_tracks1[j];
+
+        if(!picoTrack1 || (picoTrack0->id() == picoTrack1->id())) continue;
+        // picoTrack1 Cut, picoTrack0,1 id() cut
+        // Why Two different Tracks will have the same ID?
+        double d_TPCnSigmaPion1   = fabs(picoTrack1->nSigmaPion());
+        double d_TPCnSigmaProton1 = fabs(picoTrack1->nSigmaProton());
+        double d_TPCnSigmaKaon1   = fabs(picoTrack1->nSigmaKaon());
+
+        bool b_PI1  = fabs(d_TPCnSigmaPion1)   < d_SigmaCutLevel;
+        bool b_PRO1 = fabs(d_TPCnSigmaProton1) < d_SigmaCutLevel;
+        bool b_K1   = fabs(d_TPCnSigmaKaon1)   < d_SigmaCutLevel;
+
+        if( b_PI1
+           && (d_TPCnSigmaPion1 < d_TPCnSigmaProton1)
+           && (d_TPCnSigmaPion1 < d_TPCnSigmaKaon1) )
+          { b_PI1 = true; b_PRO1 = false;}// b_K1 = false;}
+
+        if( b_PRO1
+           && (d_TPCnSigmaProton1 < d_TPCnSigmaPion1)
+           && (d_TPCnSigmaProton1 < d_TPCnSigmaKaon1) )
+          { b_PRO1 = true; b_PI1 = false;}// b_K1 = false;}
+
+        if( b_K1
+           && (d_TPCnSigmaKaon1 < d_TPCnSigmaProton1)
+           && (d_TPCnSigmaKaon1 < d_TPCnSigmaPion1) )
+          { b_K1 = true; b_PRO1 = false; b_PI1 = false;}
+
+        double d_M1 = -9999.0;
+        if(b_PRO1) d_M1 = d_PRO_m;
+        else if(b_PI1)  d_M1 = d_PI_m;
+        else if(b_K1)   d_M1 = d_K_m;
+
+        double d_px1      = picoTrack1->gMom().x();
+        double d_py1      = picoTrack1->gMom().y();
+        double d_pz1      = picoTrack1->gMom().z();
+        double d_pT1      = picoTrack1->gPt();
+        double d_mom1     = sqrt(d_pT1*d_pT1 + d_pz1*d_pz1);
+
+        StPicoBTofPidTraits *trait         = NULL;
+        if(picoTrack1->isTofTrack()) trait = dst->btofPidTraits(picoTrack1->bTofPidTraitsIndex());
+        double d_tofBeta1    = -999;
+        if(trait) d_tofBeta1 = trait->btofBeta();
+        double d_charge1     = picoTrack1->charge();
+
+        double d_mc1      = d_mom1/d_charge1;
+        double d_eta1     = picoTrack1->gMom().Eta();
+        double d_phi1     = picoTrack1->gMom().Phi();
+
+        if(d_charge0 == d_charge1) continue;
+        // charge0 charge1 cut
+
+        bool b_PHI    = b_K0 && b_K1;
+        bool b_RHO    = b_PI0 && b_PI1;
+        bool b_K0S    = b_RHO;
+
+        bool b_LAMBDA = (b_PRO0 && b_PI1)||(b_PRO1 && b_PI0);
+        bool b_V0 = b_PHI || b_RHO || b_LAMBDA;
+        if(!b_V0) continue;
+        // Mother Cut
+
+        StPicoPhysicalHelix    trackhelix1 = picoTrack1->helix(B);
+
+        pair<double,double> pairLengths = trackhelix0.pathLengths(trackhelix1);
+
+        TVector3 v3D_p_daughter0 = trackhelix0.momentumAt(pairLengths.first, d_MagField*kilogauss);
+        TVector3 v3D_p_daughter1 = trackhelix1.momentumAt(pairLengths.second, d_MagField*kilogauss);
+
+        TVector3 v3D_x_daughter0 = trackhelix0.at(pairLengths.first);
+        TVector3 v3D_x_daughter1 = trackhelix1.at(pairLengths.second);
+
+        double d_dca_products =(v3D_x_daughter0-v3D_x_daughter1).Mag();
+
+        if(d_dca_products > d_cut_dca_daughters_lam) b_LAMBDA = false;
+        if(d_dca_products > d_cut_dca_daughters_k0s) b_RHO    = false;
+
+        TVector3 v3D_x_mother    = (v3D_x_daughter0+v3D_x_daughter1)*0.5;
+        TVector3 v3D_xvec_decayl = v3D_x_mother - v3D_vtx;
+        TVector3 v3D_p_mother    = v3D_p_daughter0+v3D_p_daughter1;
+
+        double d_pmom = v3D_xvec_decayl.Dot(v3D_p_mother);
+        // Mom at decayvtx: xvec Dot pvec
+
+        double d_dca_mother = sqrt(v3D_xvec_decayl.Mag2() - (d_pmom*d_pmom/v3D_p_mother.Mag2()) );
+        // DCA btw mother and vtx?
+        h_DCA_mother_r -> Fill(d_dca_mother);
+
+        if(d_dca_mother > d_cut_dca_mother_lam) b_LAMBDA = false;
+        if(d_dca_mother > d_cut_dca_mother_k0s) b_RHO    = false;
+
+        double d_mother_decay_length =  v3D_xvec_decayl.Mag();
+        h_decay_length -> Fill(d_mother_decay_length);
+
+        if(d_mother_decay_length < d_cut_mother_decay_length_lam) b_LAMBDA = false;
+        if(d_mother_decay_length < d_cut_mother_decay_length_k0s) b_K0S    = false;
+        if(d_mother_decay_length > d_cut_mother_decay_length_RHO) b_RHO    = false;
+        if(b_PHI) h_PHI_decay_length -> Fill(d_mother_decay_length);
+
+        double d_E0 = sqrt(v3D_p_daughter0.Mag2()+d_M0*d_M0);
+        double d_E1 = sqrt(v3D_p_daughter1.Mag2()+d_M1*d_M1);
+        double d_inv_m = sqrt(d_M0*d_M0
+                              +d_M1*d_M1
+                              +2.0*d_E0*d_E1
+                              -2.0*(v3D_p_daughter0.Dot(v3D_p_daughter1)) );
+
+        if(b_PHI) h_nodecaylength_cut_inv_m_PHI -> Fill(d_inv_m);
+        if(d_mother_decay_length > d_cut_mother_decay_length_PHI) b_PHI    = false;
+        if(b_PHI) h_nodipangle_cut_inv_m_PHI -> Fill(d_inv_m);
+
+        double d_dip_angle = TMath::ACos((d_pT0*d_pT1+d_pz0*d_pz1) / (d_mom0*d_mom1) );
+        if(b_PHI) h_dip_angle -> Fill(d_dip_angle);
+
+        if(d_dip_angle < 0.04) b_PHI = false;
+        // Dip Angle Cut
+
+        double d_mother_m = -9999;
+        //?
+        if(b_PHI)
+          {
+            h_inv_m_PHI    -> Fill(d_inv_m);
+          }
+        if(b_RHO)
+          {
+            h_inv_m_RHO    -> Fill(d_inv_m);
+          }
+        if(b_K0S)
+          {
+            h_inv_m_K0S    -> Fill(d_inv_m);
+          }
+        if(b_LAMBDA)
+          {
+            h_inv_m_LAMBDA -> Fill(d_inv_m);
+          }
+      }
+      //================== END Loop over Charge minus tracks =====================================
+    }
+    //=================== END Invariant Mass Nested Track Loop ===================================
+
     //======================= Invariant Mass Nested Primary Track Loop ===========================
 
     vector<StPicoTrack *> v_pri_tracks0 = v_pri_tracks_pl;
@@ -876,6 +1285,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   //=============================== End Event Loop ===============================================
 
   outputFile->cd();
+
+  bool b_write_tree = false;
+  if(b_write_tree)  t_tracks   -> Write();
 
   t_K ->Write();
   hist_pt_y_kaonPlus->Write();
