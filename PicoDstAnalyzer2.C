@@ -407,7 +407,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     vector<StPicoTrack *> v_pri_tracks_pl;
     vector<StPicoTrack *> v_pri_tracks_mi;
 
-    index = 0;
+    int index = 0;
 
     double d_PI_m    = 0.13957018;
     double d_PRO_m   = 0.9382720813;
