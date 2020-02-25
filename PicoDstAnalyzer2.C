@@ -660,9 +660,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         if(d_helix_DCA_r > d_DCA_r_cut) b_bad_DCA == true;
         if(b_bad_DCA) continue;
         //Kaon DCA Cut
-
+        /*test
         Kaoninfo.reset();
-
+        */
         if(d_charge > 0.0)
         {
           hist_pt_y_kaonPlus->Fill(d_y_K,d_pT0);
