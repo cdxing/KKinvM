@@ -160,13 +160,13 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   unsigned int  eventNumber      = 0;
 
   std::vector <unsigned int> triggerIDs;
-
+  /* test
   st_K Kaoninfo;
   // st_track trackinfo;
 
   TTree *  t_K        = new TTree("t_K","t_K");
   t_K         -> Branch("Kaoninfo",&Kaoninfo);
-
+  */
   double d_PI_m2   = 0.019479955;
   double d_K_m2    = 0.24371698;
   double d_PRO_m2  = 0.8803545;
@@ -674,7 +674,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
           v_pri_tracks_mi.push_back(picoTrack);
         }
         v_pri_tracks.push_back(picoTrack);
-
+        /* test
         if(d_charge < 0)      Kaoninfo.b_pos_charge = false;
         else                  Kaoninfo.b_pos_charge = true;
         Kaoninfo.runNumber   = runNumber;
@@ -696,7 +696,8 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         Kaoninfo.DCA_r = d_obj_DCA;
 
         Kaoninfo.b_bad_TOF = b_bad_ToF ;//|| b_bad_TOF_match;
-        // t_K -> Fill();
+        t_K -> Fill();
+        */
         // Fill Tree
         index++;
 
@@ -710,7 +711,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
   outputFile->cd();
 
-  t_K ->Write();
+  // t_K ->Write();
   hist_pt_y_kaonPlus->Write();
   hist_pt_y_kaonMinus->Write();
 
