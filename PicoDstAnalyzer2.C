@@ -239,7 +239,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   //=============================== Event Loop ===================================================
   for(Long64_t iEvent = 0; iEvent < events2read; iEvent++)//events2read
   {
-    std::cout << "Working on event #[" << (iEvent+1) << "/" << events2read << "]" << std::endl;
+    if((iEvent+1)%100 == 0) std::cout << "Working on event #[" << (iEvent+1) << "/" << events2read << "]" << std::endl;
 
     Bool_t readEvent = picoReader->readPicoEvent(iEvent);
 
