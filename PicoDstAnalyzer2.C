@@ -151,6 +151,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
   // Histogramning
   double  d_zvtx  = -9999.0;
+  double  d_xvtx  = -9999.0;
+  double  d_yvtx  = -9999.0;
+
   unsigned int  i_event = 0;
 
   unsigned int  runNumber        = 0;
@@ -177,7 +180,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
 
   TH1D *  h_evt       = new TH1D("h_evt","h_evt",1,0,1);
-  TH1D *  h_vtx      = new TH1D("h_vtx","h_vtx",100,200,220);
+  TH1D *  h_zvtx      = new TH1D("h_zvtx","h_zvtx",100,200,220);
   TH1D *  h_pT       = new TH1D("h_pT","h_pT",64,0.0,32.0);
   TH2D *  h2_dEdx_PI_pq = new TH2D("h2_dEdx_PI_pq","h2_dEdx_PI_pq",500,-2.0,2.0,500,0.6,3);
   TH2D *  h2_dEdx_PRO_pq = new TH2D("h2_dEdx_PRO_pq","h2_dEdx_PRO_pq",500,-2.0,2.0,500,0.6,3);
@@ -278,7 +281,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     bool b_bad_trig = true;
 
     // loop for the trigger ids and see if any == 1
-    for(int i=0; i < triggerIDs.size(); i++)
+    for(unsigned int i=0; i < triggerIDs.size(); i++)
       {
         if(triggerIDs[i] == 630802) b_bad_trig = false; // hlt_fixedTargetGood 7.2GeV
       }
@@ -286,12 +289,17 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     //=========================== End Trigger Slection ===========================================
 
     TVector3 pVtx     = event->primaryVertex();
+    Double_t primaryVertex_perp = (Double_t)event->primaryVertex().Perp();
+
     // Primary Vertex
 
     //=========================== Z-VTX Selection =================================================
     TVector3 v3D_vtx  = event->primaryVertex();
     d_zvtx = pVtx.z();
-    h_vtx -> Fill(d_zvtx);
+    d_xvtx = pVtx.x();
+    d_yvtx = pVtx.y();
+
+    h_zvtx -> Fill(d_zvtx);
     bool b_bad_zvtx   = ((d_zvtx < 199.0) || (d_zvtx > 202.0)); //FXT_26p5_2018
     bool b_bad_xvtx   =  ((d_xvtx < -1.0) || (d_xvtx > 1.0)); //FXT_26p5_2018
     bool b_bad_yvtx   =  ((d_yvtx < -3.0) || (d_yvtx > -0.5)); //FXT_26p5_2018
@@ -707,7 +715,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   hist_pt_y_kaonMinus->Write();
 
   h_evt      -> Write();
-  h_vtx      -> Write();
+  h_zvtx      -> Write();
   h_pT       -> Write();
   // h2_dEdx_PI_pq -> Write();
   // h2_dEdx_PRO_pq -> Write();
