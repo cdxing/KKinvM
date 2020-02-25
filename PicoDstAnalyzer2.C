@@ -172,14 +172,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   double d_K_m2    = 0.24371698;
   double d_PRO_m2  = 0.8803545;
 
-  TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonPlus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
-  TH2D *hist_pt_y_kaonMinus = new TH2D("hist_pt_y_kaonMinus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonMinus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
   TH1D *  h_evt       = new TH1D("h_evt","h_evt",1,0,1);
   TH1D *  h_zvtx      = new TH1D("h_zvtx","h_zvtx",100,200,220);
   TH1D *  h_pT       = new TH1D("h_pT","h_pT",64,0.0,32.0);
@@ -334,9 +326,11 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     int nGoodTracks = 0;
     int nTrkvsCuts  = 0;
 
+    /*test
     h2_dEdx_All_pq_1->Reset();
     h2_m2_QA_pq_1   ->Reset();
     h2_m2_QA_pT_1   ->Reset();
+    */
     for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
     {
       StPicoTrack *picoTrack = dst->track(iTrk);
