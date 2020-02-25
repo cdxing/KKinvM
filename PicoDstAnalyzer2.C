@@ -198,9 +198,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH1D *  h_DCA_mother_r    = new TH1D("h_DCA_mother_r","h_DCA_mother_r",100,0.0,2.0);
   TH1D *  h_decay_length    = new TH1D("h_decay_length","h_decay_length",1000,0.0,20.0);
 
-  TH1D *  h_K_DCA_r      = new TH1D("h_K_DCA_r","h_K_DCA_r",200,0.0,3.0);
-  TH1D *  h_K_obj_DCA_r  = new TH1D("h_K_obj_DCA_r","h_K_obj_DCA_r",200,0.0,3.0);
-  TH1D *  h_K_diff_DCA_r = new TH1D("h_K_diff_DCA_r","h_K_diff_DCA_r",400,-3.0,3.0);
+  TH1D *  h_K_DCA_r      = new TH1D("h_K_DCA_r","h_K_DCA_r",400,0.0,6.0);
+  TH1D *  h_K_obj_DCA_r  = new TH1D("h_K_obj_DCA_r","h_K_obj_DCA_r",400,0.0,6.0);
+  TH1D *  h_K_diff_DCA_r = new TH1D("h_K_diff_DCA_r","h_K_diff_DCA_r",800,-6.0,6.0);
 
   TH1D *  h_rapidity_pm = new TH1D("h_rapidity_pm","h_rapidity_pm",100,-2.0,2.0);
   TH2D *  h2_mT_rapidity_pm = new TH2D("h2_mT_rapidity_pm","h2_mT_rapidity_pm",100,0.0,1.0,20,-2.05,-0.05);
@@ -280,7 +280,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     // loop for the trigger ids and see if any == 1
     for(int i=0; i < triggerIDs.size(); i++)
       {
-        if(triggerIDs[i] == 620802) b_bad_trig = false; // 620802: 3p85 HLT
+        if(triggerIDs[i] == 630802) b_bad_trig = false; // hlt_fixedTargetGood 7.2GeV
       }
 
     //=========================== End Trigger Slection ===========================================
@@ -292,10 +292,14 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     TVector3 v3D_vtx  = event->primaryVertex();
     d_zvtx = pVtx.z();
     h_vtx -> Fill(d_zvtx);
-    bool b_bad_zvtx   = ((d_zvtx < 199.0) || (d_zvtx > 202.0)); //3p85
+    bool b_bad_zvtx   = ((d_zvtx < 199.0) || (d_zvtx > 202.0)); //FXT_26p5_2018
+    bool b_bad_xvtx   =  ((d_xvtx < -1.0) || (d_xvtx > 1.0)); //FXT_26p5_2018
+    bool b_bad_yvtx   =  ((d_yvtx < -3.0) || (d_yvtx > -0.5)); //FXT_26p5_2018
+    bool b_bad_rvtx   =  primaryVertex_perp > 3.0;
+
     //======================== END Z-VTX Selection =================================================
 
-    bool b_bad_evt  = b_bad_zvtx || b_bad_trig ;
+    bool b_bad_evt  = b_bad_zvtx || b_bad_trig || b_bad_xvtx || b_bad_yvtx || b_bad_rvtx;
     if(b_bad_evt) continue;
     // Bad Event Cut
 
@@ -312,7 +316,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     bool b_cent_06  = false; // 25 < centrality <= 30%
     bool b_cent_07  = false; // centrality > 30%
 
-    //========================= Track loop ======================================================
+    //========================= Track loop to define good tracks ======================================================
     int nGoodTracks = 0;
     int nTrkvsCuts  = 0;
 
@@ -336,6 +340,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       if(!picoTrack->isPrimary()) continue;
       // Primary Track Cut
 
+      // To get beta from Btof to calculate mass2
       StPicoBTofPidTraits *trait        = NULL;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
       double d_tofBeta0                 = -999;
@@ -367,7 +372,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     h2_dEdx_All_pq->Add(h2_dEdx_All_pq_1);
     h2_m2_QA_pq   ->Add(h2_m2_QA_pq_1);
     h2_m2_QA_pT   ->Add(h2_m2_QA_pT_1);
-    //======================== END Track loop ====================================================
+    //======================== END Track loop to define good tracks ====================================================
 
     //========================= Track Cut Settings ===============================================
     int i_Nhits_min = 9;  //minimum number of hits
@@ -377,33 +382,32 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     double d_pT_max = 10.0;//0.05;
     double d_mom_min = 0.1;//0.05;
     double d_mom_max = 10.0;// 1.0;//0.05;
-
     double d_SigmaCutLevel = 4.0;//3.0;//4.0; // PID Sigma Cut // Mon Jul  3 09:16:46 EDT 2017
 
     //--- Not being used Fri Jun 16 10:48:30 EDT 2017
-    double d_PRO_daughter_DCA = 0.3; // trk must be greater than this dca
-    double d_PI_daughter_DCA  = 1.0; // trk must be greater than this dca
+    // double d_PRO_daughter_DCA = 0.3; // trk must be greater than this dca
+    // double d_PI_daughter_DCA  = 1.0; // trk must be greater than this dca
 
     // Lambda: 1.0, K0s 1.2
     //  double d_cut_dca_daughters    = 2.0; //distance between daughters, must be less than this
-    double d_cut_dca_daughters_lam    = 1.0;//2.0; //distance between daughters, must be less than this
-    double d_cut_dca_daughters_k0s    = 1.2; //distance between daughters, must be less than this
+    // double d_cut_dca_daughters_lam    = 1.0;//2.0; //distance between daughters, must be less than this
+    // double d_cut_dca_daughters_k0s    = 1.2; //distance between daughters, must be less than this
 
 
     // Lambda: 1.5 Anti Lambda: 2.0 K0s: 1.0
     //double d_cut_dca_mother       = 5.0; // must be less than this
-    double d_cut_dca_mother_lam       = 1.5;//5.0; // must be less than this
-    double d_cut_dca_mother_k0s       = 1.0; // must be less than this
+    // double d_cut_dca_mother_lam       = 1.5;//5.0; // must be less than this
+    // double d_cut_dca_mother_k0s       = 1.0; // must be less than this
 
     // Lambda: 3.0, K0s: 2.0
     //  double d_cut_mother_decay_length = 3.0; // must be greater than this
-    double d_cut_mother_decay_length_lam = 3.0; // must be greater than this
-    double d_cut_mother_decay_length_k0s = 2.0; // must be greater than this
-    double d_cut_mother_decay_length_RHO = 0.5; // must be LESS    than this
-    double d_cut_mother_decay_length_PHI = 0.5; // must be LESS    than this
+    // double d_cut_mother_decay_length_lam = 3.0; // must be greater than this
+    // double d_cut_mother_decay_length_k0s = 2.0; // must be greater than this
+    // double d_cut_mother_decay_length_RHO = 0.5; // must be LESS    than this
+    // double d_cut_mother_decay_length_PHI = 0.5; // must be LESS    than this
     //======================== END Track Settings ================================================
 
-    //======================= Primary Track Loop =================================================
+    //======================= Primary Track Loop  to build kaon TTree =================================================
     vector<StPicoTrack *> v_pri_tracks;
     vector<StPicoTrack *> v_pri_tracks_pl;
     vector<StPicoTrack *> v_pri_tracks_mi;
@@ -424,11 +428,26 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       if(!picoTrack->isPrimary()) continue;
       // Primary Track Cut
 
+      // To get beta from Btof to calculate mass2
       StPicoBTofPidTraits *trait = NULL;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
 
+      //nHits minimum cut
       unsigned short nHits = picoTrack->nHits();
       if(nHits < i_Nhits_min)     continue;
+
+      bool b_bad_dEdx      = false;
+      bool b_bad_tracking  = false;
+      bool b_bad_ToF       = false;
+
+      b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
+      b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.52);
+
+      if(trait) b_bad_ToF       = (trait->btof() <= 0.0);
+      bool b_bad_track          = b_bad_dEdx || b_bad_tracking;
+      if(b_bad_track)              continue;
+      // Bad Track Cut
+
       double d_TPCnSigmaElectron = fabs(picoTrack->nSigmaElectron());
       double d_TPCnSigmaPion   = fabs(picoTrack->nSigmaPion());
       double d_TPCnSigmaProton = fabs(picoTrack->nSigmaProton());
@@ -440,11 +459,13 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       double d_tofBeta0    = -999;
       if(trait) d_tofBeta0 = trait->btofBeta();
 
-      bool b_PI  = fabs(d_TPCnSigmaPion)   < d_SigmaCutLevel;
-      bool b_PRO = fabs(d_TPCnSigmaProton) < d_SigmaCutLevel;
-      bool b_K   = fabs(d_TPCnSigmaKaon)   < d_SigmaCutLevel;
-      bool b_E   = fabs(d_TPCnSigmaElectron)< d_SigmaCutLevel;
+      // test new sets of PID cuts
+      bool b_PI  = false; // fabs(d_TPCnSigmaPion)   < d_SigmaCutLevel;
+      bool b_PRO = false; // fabs(d_TPCnSigmaProton) < d_SigmaCutLevel;
+      bool b_K   = false; //fabs(d_TPCnSigmaKaon)   < d_SigmaCutLevel;
+      bool b_E   = false; //fabs(d_TPCnSigmaElectron)< d_SigmaCutLevel;
 
+      /********* Remove this part of PID cut
       if( b_E
          && (d_TPCnSigmaElectron < d_TPCnSigmaPion)
          && (d_TPCnSigmaElectron < d_TPCnSigmaProton)
@@ -468,9 +489,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
          && (d_TPCnSigmaKaon < d_TPCnSigmaProton)
          && (d_TPCnSigmaKaon < d_TPCnSigmaPion) )
          { b_E = false; b_PI = false; b_PRO = false; b_K = true;}
+      */
 
       double d_charge     = picoTrack->charge();
-
       double d_px0        = picoTrack->pMom().x();
       double d_py0        = picoTrack->pMom().y();
       double d_pz0        = picoTrack->pMom().z();
@@ -478,7 +499,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       double d_mom0       = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
 
       double mass2        = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-
       double d_E_PRO      = sqrt(d_PRO_m*d_PRO_m + d_mom0*d_mom0);
       double d_E_PI       = sqrt(d_PI_m*d_PI_m + d_mom0*d_mom0);
       double d_E_K        = sqrt(d_K_m*d_K_m + d_mom0*d_mom0);
@@ -487,7 +507,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       double d_y_PI       = 0.5*TMath::Log((d_E_PI + d_pz0)/(d_E_PI - d_pz0));
       double d_y_K        = 0.5*TMath::Log((d_E_K + d_pz0)/(d_E_K - d_pz0));
 
-      b_K = false;//test
       if(d_charge > 0.0)
         {
           if( b_E
@@ -507,8 +526,8 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
           //   && (mass2 < 0.35))
           if( (fabs(d_TPCnSigmaKaon) < 2.0)
              && ( d_tofBeta0 != -999.0
-                 && mass2 > 0.17
-                 && mass2 < 0.33
+                 && mass2 > 0.19
+                 && mass2 < 0.3
                 )
              && d_pT0 > 0.2
              && d_pT0 < 1.6
@@ -563,8 +582,8 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
           //   && (mass2 < 0.35))
           if( (fabs(d_TPCnSigmaKaon) < 2.0)
              && ( d_tofBeta0 != -999.0
-                 && mass2 > 0.17
-                 && mass2 < 0.33
+                 && mass2 > 0.19
+                 && mass2 < 0.3
                 )
              && d_pT0 > 0.2
              && d_pT0 < 1.6
@@ -603,12 +622,12 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
         if(d_charge > 0.0)
           {
-            if(b_PI||b_PRO||b_E)         continue;
+            if(b_PI||b_PRO||b_E)    continue;
             if(!b_K)                continue;
           }
         else
           {
-            if(!(b_E||b_PI||b_PRO||b_K)) continue;
+            if(b_E||b_PI||b_PRO)    continue;
             if(!b_K)                continue;
           }
         // Kaon Cut
@@ -617,28 +636,12 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         if( (d_mom0<d_mom_min) || (d_mom0 > d_mom_max)) continue;
         //pT Min, Mom Min Cut
 
-        Kaoninfo.reset();
-
-        bool b_bad_dEdx      = false;
-        bool b_bad_tracking  = false;
-
-        bool b_bad_ToF       = false;
-
-        b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
-        b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.52);
-
-        if(trait) b_bad_ToF       = (trait->btof() <= 0.0);
-        bool b_bad_track          = b_bad_dEdx || b_bad_tracking;
-
-        if(b_bad_track)              continue;
-        // Bad Track Cut
-
+        bool b_bad_DCA       = false;
         StPicoPhysicalHelix trackhelix = picoTrack->helix(B);
         double helixpathl              = trackhelix.pathLength(v3D_vtx, false);
         TVector3 v3D_dca               = trackhelix.at(helixpathl)-v3D_vtx;
         double d_helix_DCA_r           = v3D_dca.Mag();
-        double d_DCA_r_cut             = 4.0;
-
+        double d_DCA_r_cut             = 3.0;
         TVector3 v3D_obj_DCA           = picoTrack->gDCA(pVtx);
         double d_obj_DCA               = v3D_obj_DCA.Mag();
 
@@ -646,8 +649,11 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         h_K_obj_DCA_r  -> Fill(d_obj_DCA);
         h_K_diff_DCA_r -> Fill(d_helix_DCA_r-d_obj_DCA);
 
-        if(d_helix_DCA_r > d_DCA_r_cut) continue;
-        //DCA Cut
+        if(d_helix_DCA_r > d_DCA_r_cut) b_bad_DCA == true;
+        if(b_bad_DCA) continue;
+        //Kaon DCA Cut
+
+        Kaoninfo.reset();
 
         if(d_charge > 0.0)
         {
