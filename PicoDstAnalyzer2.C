@@ -58,6 +58,7 @@
 #include "StPicoEvent/StPicoBTofPidTraits.h"
 #include "StPicoEvent/StPicoTrackCovMatrix.h"
 
+/*test
 class st_K : public TObject
 {
 public:
@@ -114,7 +115,7 @@ public:
 private:
     ClassDef(st_K,1);
 };
-
+*/
 //=============================== Main Function ==============================================
 void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
                       TString outFile = "test")
