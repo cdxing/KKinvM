@@ -186,6 +186,11 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   TH2D *  h2_dEdx_PI_pq = new TH2D("h2_dEdx_PI_pq","h2_dEdx_PI_pq",500,-2.0,2.0,500,0.6,3);
   TH2D *  h2_dEdx_PRO_pq = new TH2D("h2_dEdx_PRO_pq","h2_dEdx_PRO_pq",500,-2.0,2.0,500,0.6,3);
   TH2D *  h2_dEdx_K_pq = new TH2D("h2_dEdx_K_pq","h2_dEdx_K_pq",500,-2.0,2.0,500,0.6,3);
+
+  TH2D *hist_dEdx = new TH2D("hist_dEdx","dE/dx vs q*|p|",500,-3.0,3.0,500,0.0,10.0);
+  hist_dEdx->GetXaxis()->SetTitle("q*|p| (GeV/c)");
+  hist_dEdx->GetYaxis()->SetTitle("dE/dx (keV/cm)");
+
   TH2D *  h2_dEdx_All_pq = new TH2D("h2_dEdx_All_pq","h2_dEdx_All_pq",500,-2.0,2.0,2000,0.,10.);
   TH2D *  h2_dEdx_All_pq_1 = new TH2D("h2_dEdx_All_pq_1","h2_dEdx_All_pq_1",500,-2.0,2.0,2000,0.,10.);
   TH2D *  h2_m2_QA_pq = new TH2D("h2_m2_QA_pq","h2_m2_QA_pq",5000,-5.0,5.0,5000,-0.2,1.6);
@@ -362,15 +367,23 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
       double d_mom0     = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
       double mass2      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
 
+      /*test
       h2_dEdx_All_pq_1->Fill(d_mom0/(picoTrack->charge()),picoTrack->dEdx());
+`     */
+      h2_dEdx_All_pq->Fill(d_mom0/(picoTrack->charge()),picoTrack->dEdx());
 
       nGoodTracks++;
 
       if(d_tofBeta0 == -999) continue;
       // TOF Beta Cut
 
+      /*test
       h2_m2_QA_pq_1   ->Fill(d_mom0/(picoTrack->charge()),mass2);
       h2_m2_QA_pT_1   ->Fill(d_pT0/(picoTrack->charge()),mass2);
+      */
+      h2_m2_QA_pq   ->Fill(d_mom0/(picoTrack->charge()),mass2);
+      h2_m2_QA_pT   ->Fill(d_pT0/(picoTrack->charge()),mass2);
+
       h_pT            ->Fill(d_pT0);
 
       nTrkvsCuts++;
@@ -378,9 +391,11 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     }
 
     h_mult->Fill(nGoodTracks);
+    /*test
     h2_dEdx_All_pq->Add(h2_dEdx_All_pq_1);
     h2_m2_QA_pq   ->Add(h2_m2_QA_pq_1);
     h2_m2_QA_pT   ->Add(h2_m2_QA_pT_1);
+    */
     //======================== END Track loop to define good tracks ====================================================
 
     //========================= Track Cut Settings ===============================================
