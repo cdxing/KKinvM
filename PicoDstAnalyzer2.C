@@ -58,7 +58,7 @@
 #include "StPicoEvent/StPicoBTofPidTraits.h"
 #include "StPicoEvent/StPicoTrackCovMatrix.h"
 
-/*test
+
 class st_K : public TObject
 {
 public:
@@ -115,7 +115,7 @@ public:
 private:
     ClassDef(st_K,1);
 };
-*/
+
 //=============================== Main Function ==============================================
 void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
                       TString outFile = "test")
@@ -161,13 +161,13 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
   unsigned int  eventNumber      = 0;
 
   std::vector <unsigned int> triggerIDs;
-  /* test
+
   st_K Kaoninfo;
   // st_track trackinfo;
 
   TTree *  t_K        = new TTree("t_K","t_K");
   t_K         -> Branch("Kaoninfo",&Kaoninfo);
-  */
+
   double d_PI_m2   = 0.019479955;
   double d_K_m2    = 0.24371698;
   double d_PRO_m2  = 0.8803545;
@@ -674,9 +674,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         if(d_helix_DCA_r > d_DCA_r_cut) b_bad_DCA == true;
         if(b_bad_DCA) continue;
         //Kaon DCA Cut
-        /*test
+
         Kaoninfo.reset();
-        */
+
         if(d_charge > 0.0)
         {
           hist_pt_y_kaonPlus->Fill(d_y_K,d_pT0);
@@ -688,7 +688,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
           v_pri_tracks_mi.push_back(picoTrack);
         }
         v_pri_tracks.push_back(picoTrack);
-        /* test
+
         if(d_charge < 0)      Kaoninfo.b_pos_charge = false;
         else                  Kaoninfo.b_pos_charge = true;
         Kaoninfo.runNumber   = runNumber;
@@ -711,7 +711,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
         Kaoninfo.b_bad_TOF = b_bad_ToF ;//|| b_bad_TOF_match;
         t_K -> Fill();
-        */
+
         // Fill Tree
         index++;
 
@@ -725,7 +725,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
 
   outputFile->cd();
 
-  // t_K ->Write();
+  t_K ->Write();
   hist_pt_y_kaonPlus->Write();
   hist_pt_y_kaonMinus->Write();
 
