@@ -696,7 +696,7 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         Kaoninfo.DCA_r = d_obj_DCA;
 
         Kaoninfo.b_bad_TOF = b_bad_ToF ;//|| b_bad_TOF_match;
-        t_K -> Fill();
+        // t_K -> Fill();
         // Fill Tree
         index++;
 
