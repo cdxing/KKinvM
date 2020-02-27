@@ -552,7 +552,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
                  && mass2 < 0.3
                 )
              && d_pT0 > 0.2
-             && d_pT0 < 1.6
           )
           {
                b_E = false; b_PI = false; b_PRO = false; b_K = true;
@@ -608,7 +607,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
                  && mass2 < 0.3
                 )
              && d_pT0 > 0.2
-             && d_pT0 < 1.6
           )
           {
                b_E = false; b_PI = false; b_PRO = false; b_K = true;
