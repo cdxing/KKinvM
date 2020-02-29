@@ -322,13 +322,13 @@ TString outFile = "test"
     // push back track vector by trk
 
     bool b_K_eta   = (eta >= -1.47) && (eta <= 0.0);
-    if(!b_K_eta)   continue;
+    // if(!b_K_eta)   continue;
     // We want the psedorapidity region covered by TOF
 
-    if((y<-2.0)||(y>0.0)) continue;
+    // if((y<-2.0)||(y>0.0)) continue;
     // rapidity cut
 
-    if(pT > 3.0) continue;
+    // if(pT > 3.0) continue;
 
     if((fabs(d_TPCnSigmaKaon) < 3.0)
     && (mass2 > 0.15)
@@ -584,7 +584,7 @@ TString outFile = "test"
 
           h_phi_TPC2_TOF3_y -> Fill(d_phi_y);
 
-          if(d_mT_phi > 2.0) continue;
+          // if(d_mT_phi > 2.0) continue;
 
           if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
 
