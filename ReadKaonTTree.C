@@ -168,6 +168,11 @@ TString outFile = "test"
   TH1D * h_mx_TPC2_TOF3_invM_y_bin3 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin3","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -1.0 <= y < -0.5",100,0.9,1.1);
   TH1D * h_mx_TPC2_TOF3_invM_y_bin4 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin4","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -0.5 <= y <= 0.0",100,0.9,1.1);
 
+  TH1D *mHistKKInvMpT[12];
+  For(int pt=0; pt<12; pt++)
+  {
+    mHistKKInvMpT[pt] = new TH1D(Form("histKKInvMpT%d",pt),Form("histKKInvMpT%d",pt),100,0.9,1.1);
+  }
   // tf_in = TFile::Open( FileName );
   // if( !tf_in || tf_in->IsZombie() ){cout << "Error:Could not open, "<<FileName << endl;return;}
   // else{ cout << "Opened " << FileName << endl; }
@@ -545,39 +550,84 @@ TString outFile = "test"
           int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
           double d_max_multi   = (double) i_max_multi;
 
-          bool a_b_cent0[4];
+          bool a_b_cent0[10];
 
-  	      a_b_cent0[0] = ( nGoodTracks0 > 0)   && ( nGoodTracks0 < 240);
-  	      a_b_cent0[1] = ( nGoodTracks0 >= 121) && ( nGoodTracks0 < 240);
-  	      a_b_cent0[2] = ( nGoodTracks0 >= 48)  && ( nGoodTracks0 < 121);
-  	      a_b_cent0[3] = ( nGoodTracks0 > 0)   && ( nGoodTracks0 < 48);
+          // bool b_pileup   = (nGoodTracks >  270);
 
-          bool a_b_cent1[4];
-          a_b_cent1[0] = ( nGoodTracks1 > 0)   && ( nGoodTracks1 < 240);
-          a_b_cent1[1] = ( nGoodTracks1 >= 121) && ( nGoodTracks1 < 240);
-          a_b_cent1[2] = ( nGoodTracks1 >= 48)  && ( nGoodTracks1 < 121);
-          a_b_cent1[3] = ( nGoodTracks1 > 0)   && ( nGoodTracks1 < 48);
+  	      a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
+  	      a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
+  	      a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
+  	      a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
+          a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
+          a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
+          a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
+          a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
+          a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
+          a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
 
-          bool a_b_pT0[4];
-          a_b_pT0[0]    = (d_pT0 > 0.5) && (d_pT0 <= 1.0);
-          a_b_pT0[1]    = (d_pT0 > 1.0) && (d_pT0 <= 2.0);
-          a_b_pT0[2]    = (d_pT0 > 2.0) && (d_pT0 <= 3.0);
-          a_b_pT0[3]    = (d_pT0 > 0.5);
+          bool a_b_cent1[10];
+          a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
+  	      a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
+  	      a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
+  	      a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
+          a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
+          a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
+          a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
+          a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
+          a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
+          a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
 
-          bool a_b_pT1[4];
-          a_b_pT1[0]    = (d_pT1 > 0.5) && (d_pT1 <= 1.0);
-          a_b_pT1[1]    = (d_pT1 > 1.0) && (d_pT1 <= 2.0);
-          a_b_pT1[2]    = (d_pT1 > 2.0) && (d_pT1 <= 3.0);
-          a_b_pT1[3]    = (d_pT1 > 0.5);
+          // bool b_low_mult = (nGoodTracks <= 10);
+
+          bool a_b_pT0[12];
+          a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
+          a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
+          a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
+          a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
+          a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
+          a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
+          a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
+          a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
+          a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
+          a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
+          a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
+          a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
+
+          bool a_b_pT1[12];
+          a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
+          a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
+          a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
+          a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
+          a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
+          a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
+          a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
+          a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
+          a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
+          a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
+          a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
+          a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
 
           bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
   	      bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
           // eta fiducial cut
 
-          double d_pT_phi = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
-          double m_phi = 1.019455;
-          double d_mT_phi = sqrt(d_pT_phi*d_pT_phi + m_phi*m_phi );
+          double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+          bool a_b_Phi_pT[12]={};
+          a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
+          a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
+          a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
+          a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
+          a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
+          a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
+          a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
+          a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
+          a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
+          a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
+          a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
+          a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
 
+          double m_phi = 1.019455;
+          double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
           double d_phi_pz = pz0+pz1;
   	      double d_phi_E  = d_E0+d_E1;
   	      double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
@@ -596,16 +646,22 @@ TString outFile = "test"
           /* Delete PID in read kaon tree test
           if( (fabs(d_max_TPCnsig) <= 2.0) && (mass2_1 > 0.15) && (mass2_1 < 0.35) && (mass2_0 > 0.15) && (mass2_0 < 0.35) )
              {*/
-            if(j==0) h_Kmin_TPC2_TOF3_pT -> Fill( d_pT1);
-            if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
+          if(j==0) h_Kmin_TPC2_TOF3_pT -> Fill( d_pT1);
+          if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
+          if(b_PHI)
+          {
+            For(int pt=0; pt<12; pt++)
+            {
+              if(a_b_Phi_pT[pt]) mHistKKInvMpT[pt]->Fill(d_inv_m);
+            }
+          }
 
-            if(b_PHI&&(a_b_cent0[2]||a_b_cent0[1])&&(a_b_cent1[2]||a_b_cent1[1]))
+            if(b_PHI&&(a_b_cent0[2]||a_b_cent0[1]||a_b_cent0[0])&&(a_b_cent1[2]||a_b_cent1[1]||a_b_cent1[0]))
             {
               if((d_inv_m > 1.00138) && (d_inv_m < 1.03956)) h_phi_TPC2_TOF3_tight_y -> Fill(d_phi_y);
 
-              h_phi_TPC2_TOF3_pT -> Fill(d_pT_phi);
+              h_phi_TPC2_TOF3_pT -> Fill(d_Phi_pT);
               h_phi_TPC2_TOF3_mT -> Fill(d_mT_phi-m_phi);
-
               h_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
 
               if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
@@ -876,9 +932,9 @@ TString outFile = "test"
     //
     //
     //
-    //     double d_pT_phi = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+    //     double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
     // 	  double m_phi = 1.019455;
-    // 	  double d_mT_phi = sqrt(d_pT_phi*d_pT_phi + m_phi*m_phi );
+    // 	  double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
     //
     // 	  double d_phi_pz = pz0+pz1;
     // 	  double d_phi_E  = d_E0+d_E1;
@@ -886,7 +942,7 @@ TString outFile = "test"
     //
     //
     //
-    //     if(d_pT_phi > 3.0) continue;
+    //     if(d_Phi_pT > 3.0) continue;
     //
     //
     //     if((d_phi_y<-2.0)||(d_phi_y>0.0)) continue;
