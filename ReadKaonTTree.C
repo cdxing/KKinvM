@@ -169,7 +169,7 @@ TString outFile = "test"
   TH1D * h_mx_TPC2_TOF3_invM_y_bin4 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin4","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -0.5 <= y <= 0.0",100,0.9,1.1);
 
   TH1D *mHistKKInvMpT[12];
-  For(int pt=0; pt<12; pt++)
+  for(int pt=0; pt<12; pt++)
   {
     mHistKKInvMpT[pt] = new TH1D(Form("histKKInvMpT%d",pt),Form("histKKInvMpT%d",pt),100,0.9,1.1);
   }
@@ -650,7 +650,7 @@ TString outFile = "test"
           if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
           if(b_PHI)
           {
-            For(int pt=0; pt<12; pt++)
+            for(int pt=0; pt<12; pt++)
             {
               if(a_b_Phi_pT[pt]) mHistKKInvMpT[pt]->Fill(d_inv_m);
             }
