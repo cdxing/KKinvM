@@ -104,11 +104,11 @@ TChain * t_K   = new TChain("t_K");
 /////////////////////////////// Main Function //////////////////////////////////
 void ReadKaonTTree( string FileName,
 TString outFile = "test"
-//double inputParameter1 = 0
+double inputParameter1 = 0
 )
 {
   // Systematic analysis parameters
-  //Double_t d_entryRange = inputParameter1;
+  Double_t d_entryRange = inputParameter1;
   const double d_K_m        = 0.493677;
 
   outFile.Append(".readKTree.result.root");
@@ -240,7 +240,7 @@ TString outFile = "test"
   ////////////////////////////// Read Kaon Info ////////////////////////////////
   int N_events = 0; //count # of events
   // unsigned long int N_max_events = 10;
-  for( int i_entries = 0/*(d_entryRange*5550)*/; i_entries< N_entries; i_entries++)
+  for( int i_entries = (d_entryRange*5550); i_entries< N_entries; i_entries++)
   {
     // if (i_entries > N_max_events) break;
 
@@ -360,7 +360,7 @@ TString outFile = "test"
     // //////////////////////// Normal Invariant Mass Event Loop /////////////////////////
     // for(unsigned int i = 0; i < v_evt.size(); i++)
     // {
-    // 
+    //
     //   st_event         evt      = v_evt[i];
     //   vector<st_track> v_trk_pl = v_evt[i].v_trk_pl;
     //   vector<st_track> v_trk_mi = v_evt[i].v_trk_mi;
