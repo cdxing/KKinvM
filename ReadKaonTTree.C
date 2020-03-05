@@ -103,7 +103,7 @@ TChain * t_K   = new TChain("t_K");
 
 /////////////////////////////// Main Function //////////////////////////////////
 void ReadKaonTTree( string FileName,
-TString outFile = "test"
+TString outFile = "test",
 double inputParameter1 = 0
 )
 {
@@ -838,7 +838,6 @@ double inputParameter1 = 0
     	  bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
     	  bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
 
-        double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
     	  double m_phi = 1.019455;
     	  double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
 
