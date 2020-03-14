@@ -561,9 +561,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
             // h_K_plus_mT_Diff -> Fill((d_mT_K - d_K_m));
           }
           if( b_PI
-            && (fabs(d_TPCnSigmaPion) < 3.0)
-            && (mass2 > -0.03)
-            && (mass2 < 0.06)
+            && (fabs(d_TPCnSigmaPion) < 2.0)
+            && (mass2 > -0.1)
+            && (mass2 < 0.15)
             && ((d_pT0 > 0.4) || (mass2 > 0.008))
           ){
             b_E = false; b_PI = true; b_PRO = false; b_K = false;
@@ -616,9 +616,9 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
             // h_K_minus_mT_Diff -> Fill((d_mT_K - d_K_m));
           }
           if( b_PI
-            && (fabs(d_TPCnSigmaPion) < 3.0)
-            && (mass2 > -0.03)
-            && (mass2 < 0.06)
+            && (fabs(d_TPCnSigmaPion) < 2.0)
+            && (mass2 > -0.1)
+            && (mass2 < 0.15)
             && ((d_pT0 > 0.4) || (mass2 > 0.008))
           ){
             b_E = false; b_PI = true; b_PRO = false; b_K = false;
