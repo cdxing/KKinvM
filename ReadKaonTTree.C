@@ -103,12 +103,12 @@ TChain * t_K   = new TChain("t_K");
 
 /////////////////////////////// Main Function //////////////////////////////////
 void ReadKaonTTree( string FileName,
-TString outFile = "test",
-double inputParameter1 = 0
+TString outFile = "test"//,
+// double inputParameter1 = 0
 )
 {
   // Systematic analysis parameters
-  Double_t d_entryRange = inputParameter1;
+  // Double_t d_entryRange = inputParameter1;
   const double d_K_m        = 0.493677;
 
   outFile.Append(".readKTree.result.root");
@@ -227,7 +227,7 @@ double inputParameter1 = 0
   // int N_entries = t_K -> GetEntries();
   // Get the number of entries in the TTree
 
-  int N_entries = (((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) :  (t_K -> GetEntries());
+  int N_entries = /*(((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) : */ (t_K -> GetEntries());
   // multi jobs
 
   int pre_runNumber   = -9999;
@@ -240,7 +240,7 @@ double inputParameter1 = 0
   ////////////////////////////// Read Kaon Info ////////////////////////////////
   int N_events = 0; //count # of events
   // unsigned long int N_max_events = 10;
-  for( int i_entries = (d_entryRange*5550); i_entries< N_entries; i_entries++)
+  for( int i_entries = 0 /*(d_entryRange*5550)*/; i_entries< N_entries; i_entries++)
   {
     // if (i_entries > N_max_events) break;
 
