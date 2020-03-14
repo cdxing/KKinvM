@@ -357,259 +357,261 @@ double inputParameter1 = 0
 
     cout<<endl<<"  LOOPING OVER EVENTS "<< v_evt.size()<<endl<<endl;
 
-    // //////////////////////// Normal Invariant Mass Event Loop /////////////////////////
-    // for(unsigned int i = 0; i < v_evt.size(); i++)
-    // {
-    //
-    //   st_event         evt      = v_evt[i];
-    //   vector<st_track> v_trk_pl = v_evt[i].v_trk_pl;
-    //   vector<st_track> v_trk_mi = v_evt[i].v_trk_mi;
-    //   ////////////////////// Positive Track Loop ///////////////////////////////
-    //   for(unsigned int j = 0; j < v_trk_pl.size(); j++)
-    //   {
-    //     st_track trk0 = v_trk_pl[j];
-    //
-    //     bool    b_pos_charge0    = trk0.b_pos_charge;
-    //     bool    b_bad_TOF0       = trk0.b_bad_TOF;
-    //     int     runNumber0       = trk0.runNumber;
-    //     int     eventNumber0     = trk0.eventNumber;
-    //     int     nGoodTracks0     = trk0.nGoodTracks;
-    //     double  px0              = trk0.px;
-    //     double  py0              = trk0.py;
-    //     double  pz0              = trk0.pz;
-    //     double  x_vtx0           = trk0.x_vtx;
-    //     double  y_vtx0           = trk0.y_vtx;
-    //     double  z_vtx0           = trk0.z_vtx;
-    //     double  DCA_r0           = trk0.DCA_r;
-    //     double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
-    //     double  d_tofBeta0       = trk0.tofBeta;
-    //
-    //     double E_0   = sqrt((px0*px0+py0*py0+pz0*pz0)+d_K_m*d_K_m);
-    //     double y_0   = ((E_0-pz0) != 0.0) ? 0.5*TMath::Log( (E_0 + pz0) / (E_0 - pz0) ) : -9999;
-    //
-    //     double d_pT0 = sqrt(px0*px0+py0*py0);
-    //     double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
-    //     double eta0 = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
-    //
-    //     double mass2_0      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-    //
-    //     hist_pt_y_kaonPlus->Fill(y_0,d_pT0);
-    //     ////////////////////// Negative Track Loop ///////////////////////////////
-    //     for(unsigned int k = 0; k < v_trk_mi.size(); k++)
-    //     {
-    //       st_track trk1 = v_trk_mi[k];
-    //
-    //       bool    b_pos_charge1    = trk1.b_pos_charge;
-  	//       bool    b_bad_TOF1       = trk1.b_bad_TOF;
-  	//       int     runNumber1       = trk1.runNumber;
-  	//       int     eventNumber1     = trk1.eventNumber;
-  	//       int     nGoodTracks1     = trk1.nGoodTracks;
-  	//       double  px1              = trk1.px;
-  	//       double  py1              = trk1.py;
-  	//       double  pz1              = trk1.pz;
-  	//       double  x_vtx1           = trk1.x_vtx;
-  	//       double  y_vtx1           = trk1.y_vtx;
-  	//       double  z_vtx1           = trk1.z_vtx;
-  	//       double  DCA_r1           = trk1.DCA_r;
-  	//       double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
-    //       double  d_tofBeta1       = trk1.tofBeta;
-    //
-    //       if(b_K_min_check) d_TPCnSigmaKaon1 = 0.0;
-    //       //turn off pid for k minus to get more statistics
-    //
-    //       double d_pT1 = sqrt(px1*px1+py1*py1);
-    //       double d_mom1 = sqrt(px1*px1+py1*py1+pz1*pz1);
-    //       double eta1 = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
-    //
-    //       if(eventNumber0 != eventNumber1) continue;
-  	//       if(eventNumber1 != eventNumber1) continue;
-    //       //double check events
-    //       bool b_PHI = true;
-    //
-    //       double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
-  	//       h_dip_angle        -> Fill(d_dip_angle);
-    //
-    //       Int_t centrality0 = 0;
-    //       Int_t centrality1 = 0;
-    //
-    //       double d_M1 = d_K_m;
-    //       double d_M0 = d_K_m;
-    //
-    //       double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
-    //       double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
-    //
-    //       double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
-    //       double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
-    //
-    //       double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
-    //       double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
-    //
-    //       hist_pt_y_kaonMinus->Fill(d_y1,d_pT1);
-    //
-    //       Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
-    //       Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
-    //
-    //       Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
-    //       Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
-    //
-    //       // double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
-    //       // double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
-    //
-    //       // efficiency corrections
-    //       // d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
-    //       // d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
-    //
-    //       // Primary normal events
-    //       double d_eff_corr0 = 1.0;
-    //       double d_eff_corr1 = 1.0;
-    //
-    //
-    //       h_eff_corr0->Fill(d_eff_corr0);
-    //       h_eff_corr1->Fill(d_eff_corr1);
-    //
-    //       double d_inv_m = sqrt(  d_M0*d_M0
-    //                             + d_M1*d_M1
-    //                             + 2.0 *d_E0*d_E1
-    //                             - 2.0 *(px0*px1+py0*py1+pz0*pz1) );
-    //
-    //       if(b_PHI) h_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //       // Raw distribution of Phi invariant mass
-    //       double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
-    //       double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
-    //
-    //       int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
-    //       double d_max_multi   = (double) i_max_multi;
-    //
-    //       bool b_pileup0   = (nGoodTracks0 > 270);
-    //       bool b_pileup1   = (nGoodTracks1 > 270);
-    //       bool b_low_mult0 = (nGoodTracks0 <= 10);
-    //       bool b_low_mult1 = (nGoodTracks1 <= 10);
-    //
-    //       if(b_pileup0||b_pileup1) continue;
-    //
-    //       bool a_b_cent0[10];
-    //
-  	//       a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
-  	//       a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
-  	//       a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
-  	//       a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
-    //       a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
-    //       a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
-    //       a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
-    //       a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
-    //       a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
-    //       a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
-    //
-    //       bool a_b_cent1[10];
-    //       a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
-  	//       a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
-  	//       a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
-  	//       a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
-    //       a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
-    //       a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
-    //       a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
-    //       a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
-    //       a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
-    //       a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
-    //
-    //       bool a_b_pT0[12];
-    //       a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
-    //       a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
-    //       a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
-    //       a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
-    //       a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
-    //       a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
-    //       a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
-    //       a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
-    //       a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
-    //       a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
-    //       a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
-    //       a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
-    //
-    //       bool a_b_pT1[12];
-    //       a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
-    //       a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
-    //       a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
-    //       a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
-    //       a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
-    //       a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
-    //       a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
-    //       a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
-    //       a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
-    //       a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
-    //       a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
-    //       a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
-    //
-    //       bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
-  	//       bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
-    //       // eta fiducial cut
-    //
-    //       double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
-    //       bool a_b_Phi_pT[12]={};
-    //       a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
-    //       a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
-    //       a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
-    //       a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
-    //       a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
-    //       a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
-    //       a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
-    //       a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
-    //       a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
-    //       a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
-    //       a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
-    //       a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
-    //
-    //       double m_phi = 1.019455;
-    //       double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
-    //       double d_phi_pz = pz0+pz1;
-  	//       double d_phi_E  = d_E0+d_E1;
-  	//       double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
-    //
-    //       h_phi_TPC2_TOF3_y -> Fill(d_phi_y);
-    //
-    //       // if(d_mT_phi > 2.0) continue;
-    //
-    //       if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-    //
-    //       if(nGoodTracks0 != nGoodTracks1) continue;
-    //
-    //       if(b_K_pl_check) d_max_TPCnsig = d_TPCnSigmaKaon1;
-    //       // Turn off the pid for K minus to get more statistics
-    //
-    //       /* Delete PID in read kaon tree test
-    //       if( (fabs(d_max_TPCnsig) <= 2.0) && (mass2_1 > 0.15) && (mass2_1 < 0.35) && (mass2_0 > 0.15) && (mass2_0 < 0.35) )
-    //          {*/
-    //       if(j==0) h_Kmin_TPC2_TOF3_pT -> Fill( d_pT1);
-    //       if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
-    //       if(b_PHI)
-    //       {
-    //         for(int pt=0; pt<12; pt++)
-    //         {
-    //           if(a_b_Phi_pT[pt]) mHistKKInvMpT[pt]->Fill(d_inv_m);
-    //           h_phi_TPC2_TOF3_pT -> Fill(d_Phi_pT);
-    //           h_phi_TPC2_TOF3_mT -> Fill(d_mT_phi-m_phi);
-    //         }
-    //       }
-    //
-    //         if(b_PHI&&(a_b_cent0[2]||a_b_cent0[1]||a_b_cent0[0])&&(a_b_cent1[2]||a_b_cent1[1]||a_b_cent1[0]))
-    //         {
-    //           if((d_inv_m > 1.00138) && (d_inv_m < 1.03956)) h_phi_TPC2_TOF3_tight_y -> Fill(d_phi_y);
-    //
-    //           h_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //
-    //           if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //
-    //         }
-    //       // }
-    //     }
-    //     ////////////////// End Negative Track Loop ///////////////////////////////
-    //   }
-    //   ////////////////// End Positive Track Loop ///////////////////////////////
-    // }
-    // //////////////////// END Normal Invariant mass Event Loop /////////////////////////
+    //////////////////////// Normal Invariant Mass Event Loop /////////////////////////
+    for(unsigned int i = 0; i < v_evt.size(); i++)
+    {
+
+      st_event         evt      = v_evt[i];
+      vector<st_track> v_trk_pl = v_evt[i].v_trk_pl;
+      vector<st_track> v_trk_mi = v_evt[i].v_trk_mi;
+      ////////////////////// Positive Track Loop ///////////////////////////////
+      for(unsigned int j = 0; j < v_trk_pl.size(); j++)
+      {
+        st_track trk0 = v_trk_pl[j];
+
+        bool    b_pos_charge0    = trk0.b_pos_charge;
+        bool    b_bad_TOF0       = trk0.b_bad_TOF;
+        int     runNumber0       = trk0.runNumber;
+        int     eventNumber0     = trk0.eventNumber;
+        int     nGoodTracks0     = trk0.nGoodTracks;
+        double  px0              = trk0.px;
+        double  py0              = trk0.py;
+        double  pz0              = trk0.pz;
+        double  x_vtx0           = trk0.x_vtx;
+        double  y_vtx0           = trk0.y_vtx;
+        double  z_vtx0           = trk0.z_vtx;
+        double  DCA_r0           = trk0.DCA_r;
+        double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
+        double  d_tofBeta0       = trk0.tofBeta;
+
+        double E_0   = sqrt((px0*px0+py0*py0+pz0*pz0)+d_K_m*d_K_m);
+        double y_0   = ((E_0-pz0) != 0.0) ? 0.5*TMath::Log( (E_0 + pz0) / (E_0 - pz0) ) : -9999;
+
+        double d_pT0 = sqrt(px0*px0+py0*py0);
+        double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
+        double eta0 = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
+
+        double mass2_0      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+
+        hist_pt_y_kaonPlus->Fill(y_0,d_pT0);
+        ////////////////////// Negative Track Loop ///////////////////////////////
+        for(unsigned int k = 0; k < v_trk_mi.size(); k++)
+        {
+          st_track trk1 = v_trk_mi[k];
+
+          bool    b_pos_charge1    = trk1.b_pos_charge;
+  	      bool    b_bad_TOF1       = trk1.b_bad_TOF;
+  	      int     runNumber1       = trk1.runNumber;
+  	      int     eventNumber1     = trk1.eventNumber;
+  	      int     nGoodTracks1     = trk1.nGoodTracks;
+  	      double  px1              = trk1.px;
+  	      double  py1              = trk1.py;
+  	      double  pz1              = trk1.pz;
+  	      double  x_vtx1           = trk1.x_vtx;
+  	      double  y_vtx1           = trk1.y_vtx;
+  	      double  z_vtx1           = trk1.z_vtx;
+  	      double  DCA_r1           = trk1.DCA_r;
+  	      double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
+          double  d_tofBeta1       = trk1.tofBeta;
+
+          if(b_K_min_check) d_TPCnSigmaKaon1 = 0.0;
+          //turn off pid for k minus to get more statistics
+
+          double d_pT1 = sqrt(px1*px1+py1*py1);
+          double d_mom1 = sqrt(px1*px1+py1*py1+pz1*pz1);
+          double eta1 = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
+
+          if(runNumber0 != runNumber1) continue;
+  	      if(eventNumber0 != eventNumber1) continue;
+          //double check events
+          bool b_PHI = true;
+
+          double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
+  	      h_dip_angle        -> Fill(d_dip_angle);
+
+          Int_t centrality0 = 0;
+          Int_t centrality1 = 0;
+
+          double d_M1 = d_K_m;
+          double d_M0 = d_K_m;
+
+          double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
+          double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
+
+          double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
+          double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
+
+          double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
+          double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
+
+          hist_pt_y_kaonMinus->Fill(d_y1,d_pT1);
+
+          Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
+          Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
+
+          Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
+          Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
+
+          // double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
+          // double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
+
+          // efficiency corrections
+          // d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
+          // d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
+
+          // Primary normal events
+          double d_eff_corr0 = 1.0;
+          double d_eff_corr1 = 1.0;
+
+
+          h_eff_corr0->Fill(d_eff_corr0);
+          h_eff_corr1->Fill(d_eff_corr1);
+
+          double d_inv_m = sqrt(  d_M0*d_M0
+                                + d_M1*d_M1
+                                + 2.0 *d_E0*d_E1
+                                - 2.0 *(px0*px1+py0*py1+pz0*pz1) );
+
+          if(b_PHI) h_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+          // Raw distribution of Phi invariant mass
+          double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
+          double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
+
+          int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
+          double d_max_multi   = (double) i_max_multi;
+
+          bool b_pileup0   = (nGoodTracks0 > 270);
+          bool b_pileup1   = (nGoodTracks1 > 270);
+          bool b_low_mult0 = (nGoodTracks0 <= 10);
+          bool b_low_mult1 = (nGoodTracks1 <= 10);
+
+          if(b_pileup0||b_pileup1) continue;
+
+          bool a_b_cent0[10];
+
+  	      a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
+  	      a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
+  	      a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
+  	      a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
+          a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
+          a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
+          a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
+          a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
+          a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
+          a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
+
+          bool a_b_cent1[10];
+          a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
+  	      a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
+  	      a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
+  	      a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
+          a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
+          a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
+          a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
+          a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
+          a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
+          a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
+
+          if( nGoodTracks0>=200 || nGoodTracks1>=200||nGoodTracks0<40||nGoodTracks1<40)
+
+          bool a_b_pT0[12];
+          a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
+          a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
+          a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
+          a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
+          a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
+          a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
+          a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
+          a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
+          a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
+          a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
+          a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
+          a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
+
+          bool a_b_pT1[12];
+          a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
+          a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
+          a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
+          a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
+          a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
+          a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
+          a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
+          a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
+          a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
+          a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
+          a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
+          a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
+
+          bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
+  	      bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
+          // eta fiducial cut
+
+          double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+          bool a_b_Phi_pT[12]={};
+          a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
+          a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
+          a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
+          a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
+          a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
+          a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
+          a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
+          a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
+          a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
+          a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
+          a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
+          a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
+
+          double m_phi = 1.019455;
+          double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
+          double d_phi_pz = pz0+pz1;
+  	      double d_phi_E  = d_E0+d_E1;
+  	      double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
+
+          h_phi_TPC2_TOF3_y -> Fill(d_phi_y);
+
+          // if(d_mT_phi > 2.0) continue;
+
+          if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+
+          if(nGoodTracks0 != nGoodTracks1) continue;
+
+          if(b_K_pl_check) d_max_TPCnsig = d_TPCnSigmaKaon1;
+          // Turn off the pid for K minus to get more statistics
+
+          /* Delete PID in read kaon tree test
+          if( (fabs(d_max_TPCnsig) <= 2.0) && (mass2_1 > 0.15) && (mass2_1 < 0.35) && (mass2_0 > 0.15) && (mass2_0 < 0.35) )
+             {*/
+          if(j==0) h_Kmin_TPC2_TOF3_pT -> Fill( d_pT1);
+          if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
+          if(b_PHI)
+          {
+            for(int pt=0; pt<12; pt++)
+            {
+              if(a_b_Phi_pT[pt]) mHistKKInvMpT[pt]->Fill(d_inv_m);
+              h_phi_TPC2_TOF3_pT -> Fill(d_Phi_pT);
+              h_phi_TPC2_TOF3_mT -> Fill(d_mT_phi-m_phi);
+            }
+          }
+
+            if(b_PHI&&(a_b_cent0[2]||a_b_cent0[1]||a_b_cent0[0])&&(a_b_cent1[2]||a_b_cent1[1]||a_b_cent1[0]))
+            {
+              if((d_inv_m > 1.00138) && (d_inv_m < 1.03956)) h_phi_TPC2_TOF3_tight_y -> Fill(d_phi_y);
+
+              h_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+
+              if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+              if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+              if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+              if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+
+            }
+          // }
+        }
+        ////////////////// End Negative Track Loop ///////////////////////////////
+      }
+      ////////////////// End Positive Track Loop ///////////////////////////////
+    }
+    //////////////////// END Normal Invariant mass Event Loop /////////////////////////
 
     int j_start = 0;
     unsigned long long pre_event_pl_runnumber = 9999;
@@ -622,255 +624,255 @@ double inputParameter1 = 0
     bool b_half  = false;
     bool b_quart = false;
     set<unsigned long long> s_used_mx_events;
-    ////////////////// Mixed Invariant mass Event Loop ///////////////////////
-    for(int i = (d_entryRange*5550); i < N_entries; i++)
-    {
-      // if(i > N_max_events) break;
-      if(( i > ((double) (N_entries-d_entryRange*5550)/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (3.0*(N_entries-d_entryRange*5550))/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (N_entries-d_entryRange*5550)/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
-      t_K -> GetEntry(i);
-      bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
-      unsigned int i_runNumber0   = t_K -> GetLeaf("runNumber")->GetValue(0);
-      unsigned int i_eventNumber0 = t_K -> GetLeaf("eventNumber")->GetValue(0);
-      unsigned long long event_pl_runnumber0 = (i_runNumber0-16140000)*100000+i_eventNumber0;
-      if(event_pl_runnumber0 != pre_event_pl_runnumber) {j_start = i; pre_event_pl_runnumber = event_pl_runnumber0; b_found_mixed_evt = false; }
-
-      int    nGoodTracks0  = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-
-      double d_xvtx0 = t_K -> GetLeaf("x_vtx")->GetValue(0);
-      double d_yvtx0 = t_K -> GetLeaf("y_vtx")->GetValue(0);
-      double d_zvtx0 = t_K -> GetLeaf("z_vtx")->GetValue(0);
-
-      double px0 = t_K -> GetLeaf("px")->GetValue(0);
-      double py0 = t_K -> GetLeaf("py")->GetValue(0);
-      double pz0 = t_K -> GetLeaf("pz")->GetValue(0);
-
-      double  d_tofBeta0       = t_K -> GetLeaf("tofBeta")->GetValue(0);
-      double  DCA_r0           = t_K-> GetLeaf("DCA_r")->GetValue(0);
-      double  d_TPCnSigmaKaon0 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-
-      double d_pT0    = sqrt(px0*px0+py0*py0);
-      double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
-      double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
-      double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-
-      ///////////////////////// Mixed Track Loop ///////////////////////////////
-      for(int j = j_start; j < N_entries; j++)
-      {
-        t_K -> GetEntry(j);
-        unsigned int i_runNumber1   = t_K -> GetLeaf("runNumber")->GetValue(0);
-        unsigned int i_eventNumber1 = t_K -> GetLeaf("eventNumber")->GetValue(0);
-        unsigned long long event_pl_runnumber1 = (i_runNumber1-16140000)*100000+i_eventNumber1;
-
-        int     nGoodTracks1     = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-        double d_xvtx1 = t_K -> GetLeaf("x_vtx")->GetValue(0);
-        double d_yvtx1 = t_K -> GetLeaf("y_vtx")->GetValue(0);
-        double d_zvtx1 = t_K -> GetLeaf("z_vtx")->GetValue(0);
-
-
-
-        if(event_pl_runnumber0 == event_pl_runnumber1)
-    	    {
-    	      //cout<<"                            same event continueing"<<endl;
-    	      continue;
-    	    }
-    	  if(b_found_mixed_evt && (event_pl_runnumber1 != this_mixed_event_pl_runnumber) && i_found_mixed_evt == 5 )
-    	    {
-    	      //cout<<" hit next mixed event breaking "<<event_pl_runnumber1 <<endl;
-    	      break;
-    	    }
-    	  if(fabs(d_zvtx1 - d_zvtx0)>0.5)
-    	    {
-    	      // cout<<"                            bad zvtx continuing "<<event_pl_runnumber1<<endl;
-    	      continue;
-    	    }
-
-        if(!b_found_mixed_evt) s_used_mx_events.insert(event_pl_runnumber1);
-        b_found_mixed_evt = true;
-        i_found_mixed_evt++;
-        this_mixed_event_pl_runnumber = event_pl_runnumber1;
-
-        bool b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
-
-        if(b_pos_charge0 == b_pos_charge1) continue;
-
-
-        double px1 = t_K -> GetLeaf("px")->GetValue(0);
-    	  double py1 = t_K -> GetLeaf("py")->GetValue(0);
-    	  double pz1 = t_K -> GetLeaf("pz")->GetValue(0);
-
-        double  DCA_r1           = t_K-> GetLeaf("DCA_r")->GetValue(0);
-        double  d_TPCnSigmaKaon1 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-        double  d_tofBeta1       = t_K -> GetLeaf("tofBeta")->GetValue(0);
-
-        double d_M1 = d_K_m;
-        double d_M0 = d_K_m;
-        double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
-        double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
-
-        double d_pT1   = sqrt(px1*px1+py1*py1);
-        double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
-        double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
-        double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
-
-        double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
-        double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
-
-        double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
-        double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
-
-        double d_inv_m = sqrt( d_M0*d_M0
-                              +d_M1*d_M1
-                              +2.0*d_E0*d_E1
-                              -2.0*(px0*px1+py0*py1+pz0*pz1) );
-
-
-        bool   b_PHI       = true;
-        double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
-
-        Int_t centrality0 = 0;
-        Int_t centrality1 = 0;
-
-        bool b_pileup0   = (nGoodTracks0 > 270);
-        bool b_pileup1   = (nGoodTracks1 > 270);
-        bool b_low_mult0 = (nGoodTracks0 <= 10);
-        bool b_low_mult1 = (nGoodTracks1 <= 10);
-
-        if(b_pileup0||b_pileup1) continue;
-
-        bool a_b_cent0[10];
-
-        a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
-        a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
-        a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
-        a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
-        a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
-        a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
-        a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
-        a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
-        a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
-        a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
-
-        bool a_b_cent1[10];
-        a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
-        a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
-        a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
-        a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
-        a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
-        a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
-        a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
-        a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
-        a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
-        a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
-
-        bool a_b_pT0[12];
-        a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
-        a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
-        a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
-        a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
-        a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
-        a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
-        a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
-        a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
-        a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
-        a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
-        a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
-        a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
-
-        bool a_b_pT1[12];
-        a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
-        a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
-        a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
-        a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
-        a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
-        a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
-        a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
-        a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
-        a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
-        a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
-        a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
-        a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
-
-
-        double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
-        bool a_b_Phi_pT[12]={};
-        a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
-        a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
-        a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
-        a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
-        a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
-        a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
-        a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
-        a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
-        a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
-        a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
-        a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
-        a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
-
-        Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
-        Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
-
-        Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
-        Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
-
-        double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
-        double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
-
-        // efficiency corrections
-        d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
-        d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
-
-        h_eff_corr0->Fill(d_eff_corr0);
-        h_eff_corr1->Fill(d_eff_corr1);
-
-        double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
-        double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
-
-        int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
-    	  double d_max_multi   = (double) i_max_multi;
-
-        if(b_PHI) h_mx_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-
-        // centrality cut
-
-        //eta fiducial cut
-    	  bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
-    	  bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
-
-    	  double m_phi = 1.019455;
-    	  double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
-
-    	  double d_phi_pz = pz0+pz1;
-    	  double d_phi_E  = d_E0+d_E1;
-    	  double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
-
-        // if(d_Phi_pT > 3.0) continue;
-
-        // if((d_phi_y<-2.0)||(d_phi_y>0.0)) continue;
-
-        if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-
-        if(b_K_pl_check)  d_max_TPCnsig = d_TPCnSigmaKaon1;
-
-        if(b_PHI)
-        {
-          for(int pt=0; pt<12; pt++)
-          {
-            if(a_b_Phi_pT[pt]) mHistKKInvMpTMixed[pt]->Fill(d_inv_m);
-          }
-
-          h_mx_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_mx_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_mx_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_mx_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_mx_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-
-        } //test
-      }
-      ///////////////////// End Mixed Track Loop ///////////////////////////////
-    }
-    //////////// END Mixed Invariant mass Event Loop ///////////////////////
+    // ////////////////// Mixed Invariant mass Event Loop ///////////////////////
+    // for(int i = (d_entryRange*5550); i < N_entries; i++)
+    // {
+    //   // if(i > N_max_events) break;
+    //   if(( i > ((double) (N_entries-d_entryRange*5550)/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+    //   if(( i > ((double) (3.0*(N_entries-d_entryRange*5550))/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+    //   if(( i > ((double) (N_entries-d_entryRange*5550)/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
+    //   t_K -> GetEntry(i);
+    //   bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+    //   unsigned int i_runNumber0   = t_K -> GetLeaf("runNumber")->GetValue(0);
+    //   unsigned int i_eventNumber0 = t_K -> GetLeaf("eventNumber")->GetValue(0);
+    //   unsigned long long event_pl_runnumber0 = (i_runNumber0-19150000)*10000000+i_eventNumber0;
+    //   if(event_pl_runnumber0 != pre_event_pl_runnumber) {j_start = i; pre_event_pl_runnumber = event_pl_runnumber0; b_found_mixed_evt = false; }
+    //
+    //   int    nGoodTracks0  = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+    //
+    //   double d_xvtx0 = t_K -> GetLeaf("x_vtx")->GetValue(0);
+    //   double d_yvtx0 = t_K -> GetLeaf("y_vtx")->GetValue(0);
+    //   double d_zvtx0 = t_K -> GetLeaf("z_vtx")->GetValue(0);
+    //
+    //   double px0 = t_K -> GetLeaf("px")->GetValue(0);
+    //   double py0 = t_K -> GetLeaf("py")->GetValue(0);
+    //   double pz0 = t_K -> GetLeaf("pz")->GetValue(0);
+    //
+    //   double  d_tofBeta0       = t_K -> GetLeaf("tofBeta")->GetValue(0);
+    //   double  DCA_r0           = t_K-> GetLeaf("DCA_r")->GetValue(0);
+    //   double  d_TPCnSigmaKaon0 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
+    //
+    //   double d_pT0    = sqrt(px0*px0+py0*py0);
+    //   double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
+    //   double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
+    //   double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+    //
+    //   ///////////////////////// Mixed Track Loop ///////////////////////////////
+    //   for(int j = j_start; j < N_entries; j++)
+    //   {
+    //     t_K -> GetEntry(j);
+    //     unsigned int i_runNumber1   = t_K -> GetLeaf("runNumber")->GetValue(0);
+    //     unsigned int i_eventNumber1 = t_K -> GetLeaf("eventNumber")->GetValue(0);
+    //     unsigned long long event_pl_runnumber1 = (i_runNumber1-19150000)*10000000+i_eventNumber1;
+    //
+    //     int     nGoodTracks1     = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+    //     double d_xvtx1 = t_K -> GetLeaf("x_vtx")->GetValue(0);
+    //     double d_yvtx1 = t_K -> GetLeaf("y_vtx")->GetValue(0);
+    //     double d_zvtx1 = t_K -> GetLeaf("z_vtx")->GetValue(0);
+    //
+    //
+    //
+    //     if(event_pl_runnumber0 == event_pl_runnumber1)
+    // 	    {
+    // 	      //cout<<"                            same event continueing"<<endl;
+    // 	      continue;
+    // 	    }
+    // 	  if(b_found_mixed_evt && (event_pl_runnumber1 != this_mixed_event_pl_runnumber) && i_found_mixed_evt == 5 )
+    // 	    {
+    // 	      //cout<<" hit next mixed event breaking "<<event_pl_runnumber1 <<endl;
+    // 	      break;
+    // 	    }
+    // 	  if(fabs(d_zvtx1 - d_zvtx0)>0.5)
+    // 	    {
+    // 	      // cout<<"                            bad zvtx continuing "<<event_pl_runnumber1<<endl;
+    // 	      continue;
+    // 	    }
+    //
+    //     if(!b_found_mixed_evt) s_used_mx_events.insert(event_pl_runnumber1);
+    //     b_found_mixed_evt = true;
+    //     i_found_mixed_evt++;
+    //     this_mixed_event_pl_runnumber = event_pl_runnumber1;
+    //
+    //     bool b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+    //
+    //     if(b_pos_charge0 == b_pos_charge1) continue;
+    //
+    //
+    //     double px1 = t_K -> GetLeaf("px")->GetValue(0);
+    // 	  double py1 = t_K -> GetLeaf("py")->GetValue(0);
+    // 	  double pz1 = t_K -> GetLeaf("pz")->GetValue(0);
+    //
+    //     double  DCA_r1           = t_K-> GetLeaf("DCA_r")->GetValue(0);
+    //     double  d_TPCnSigmaKaon1 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
+    //     double  d_tofBeta1       = t_K -> GetLeaf("tofBeta")->GetValue(0);
+    //
+    //     double d_M1 = d_K_m;
+    //     double d_M0 = d_K_m;
+    //     double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
+    //     double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
+    //
+    //     double d_pT1   = sqrt(px1*px1+py1*py1);
+    //     double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
+    //     double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
+    //     double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
+    //
+    //     double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
+    //     double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
+    //
+    //     double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
+    //     double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
+    //
+    //     double d_inv_m = sqrt( d_M0*d_M0
+    //                           +d_M1*d_M1
+    //                           +2.0*d_E0*d_E1
+    //                           -2.0*(px0*px1+py0*py1+pz0*pz1) );
+    //
+    //
+    //     bool   b_PHI       = true;
+    //     double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
+    //
+    //     Int_t centrality0 = 0;
+    //     Int_t centrality1 = 0;
+    //
+    //     bool b_pileup0   = (nGoodTracks0 > 270);
+    //     bool b_pileup1   = (nGoodTracks1 > 270);
+    //     bool b_low_mult0 = (nGoodTracks0 <= 10);
+    //     bool b_low_mult1 = (nGoodTracks1 <= 10);
+    //
+    //     if(b_pileup0||b_pileup1) continue;
+    //
+    //     bool a_b_cent0[10];
+    //
+    //     a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
+    //     a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
+    //     a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
+    //     a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
+    //     a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
+    //     a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
+    //     a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
+    //     a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
+    //     a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
+    //     a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
+    //
+    //     bool a_b_cent1[10];
+    //     a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
+    //     a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
+    //     a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
+    //     a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
+    //     a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
+    //     a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
+    //     a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
+    //     a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
+    //     a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
+    //     a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
+    //
+    //     bool a_b_pT0[12];
+    //     a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
+    //     a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
+    //     a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
+    //     a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
+    //     a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
+    //     a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
+    //     a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
+    //     a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
+    //     a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
+    //     a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
+    //     a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
+    //     a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
+    //
+    //     bool a_b_pT1[12];
+    //     a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
+    //     a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
+    //     a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
+    //     a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
+    //     a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
+    //     a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
+    //     a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
+    //     a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
+    //     a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
+    //     a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
+    //     a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
+    //     a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
+    //
+    //
+    //     double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+    //     bool a_b_Phi_pT[12]={};
+    //     a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
+    //     a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
+    //     a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
+    //     a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
+    //     a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
+    //     a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
+    //     a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
+    //     a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
+    //     a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
+    //     a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
+    //     a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
+    //     a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
+    //
+    //     Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
+    //     Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
+    //
+    //     Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
+    //     Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
+    //
+    //     double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
+    //     double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
+    //
+    //     // efficiency corrections
+    //     d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
+    //     d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
+    //
+    //     h_eff_corr0->Fill(d_eff_corr0);
+    //     h_eff_corr1->Fill(d_eff_corr1);
+    //
+    //     double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
+    //     double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
+    //
+    //     int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
+    // 	  double d_max_multi   = (double) i_max_multi;
+    //
+    //     if(b_PHI) h_mx_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //
+    //     // centrality cut
+    //
+    //     //eta fiducial cut
+    // 	  bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
+    // 	  bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
+    //
+    // 	  double m_phi = 1.019455;
+    // 	  double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
+    //
+    // 	  double d_phi_pz = pz0+pz1;
+    // 	  double d_phi_E  = d_E0+d_E1;
+    // 	  double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
+    //
+    //     // if(d_Phi_pT > 3.0) continue;
+    //
+    //     // if((d_phi_y<-2.0)||(d_phi_y>0.0)) continue;
+    //
+    //     if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+    //
+    //     if(b_K_pl_check)  d_max_TPCnsig = d_TPCnSigmaKaon1;
+    //
+    //     if(b_PHI)
+    //     {
+    //       for(int pt=0; pt<12; pt++)
+    //       {
+    //         if(a_b_Phi_pT[pt]) mHistKKInvMpTMixed[pt]->Fill(d_inv_m);
+    //       }
+    //
+    //       h_mx_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //       if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_mx_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //       if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_mx_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //       if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_mx_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //       if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_mx_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
+    //
+    //     } //test
+    //   }
+    //   ///////////////////// End Mixed Track Loop ///////////////////////////////
+    // }
+    // //////////// END Mixed Invariant mass Event Loop ///////////////////////
     // h_mx_prim_inv_m_PHI    -> SaveAs("./result/h_mx_prim_inv_m_PHI_5mx_tot.root");
 
     // for( int k = 0; k < 8; k++)
