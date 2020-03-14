@@ -109,7 +109,7 @@ TString outFile = "test"//,
 {
   // Systematic analysis parameters
   // Double_t d_entryRange = inputParameter1;
-  const double d_K_m        = 0.493677;
+  const double d_K_m        = 0.493696;
 
   outFile.Append(".readKTree.result.root");
   TFile * tf_KPlusEffTable_in   = new TFile("/star/data01/pwg/dchen/offline/paper/psn0716/p_pi_v1/fixed_target_efficiency_acceptance_factors_from_embedding/KPlusEffTable.root","READ");
