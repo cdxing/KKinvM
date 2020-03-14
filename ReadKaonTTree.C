@@ -513,7 +513,7 @@ TString outFile = "test"//,
           a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
 
           // 10-70% centrality
-          if( nGoodTracks0>=200 || nGoodTracks1>=200||nGoodTracks0<40||nGoodTracks1<40)
+          if( nGoodTracks0>=200 || nGoodTracks1>=200||nGoodTracks0<40||nGoodTracks1<40) continue;
 
           bool a_b_pT0[12];
           a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
