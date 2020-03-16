@@ -103,12 +103,10 @@ TChain * t_K   = new TChain("t_K");
 
 /////////////////////////////// Main Function //////////////////////////////////
 void ReadKaonTTree( string FileName,
-TString outFile = "test",
- double inputParameter1 = 0.
+TString outFile = "test"
 )
 {
   // Systematic analysis parameters
-  Double_t d_entryRange = inputParameter1;
   const double d_K_m        = 0.493696;
 
   outFile.Append(".readKTree.result.root");
@@ -196,7 +194,7 @@ TString outFile = "test",
     Int_t nFile = 0;
     string file;
     while(getline(inputStream, file)) {
-      if(file.find(".picoDst.result.root") != string::npos) {
+      if(file.find(".root") != string::npos) {
         TFile* ftmp = TFile::Open(file.c_str());
         if(ftmp && !ftmp->IsZombie() && ftmp->GetNkeys()) {
           cout << " Read in picoDst file " << file << endl;
@@ -212,7 +210,7 @@ TString outFile = "test",
 
     cout << " Total " << nFile << " files have been read in. " << endl;
   } //if(FileName.find(".list") != string::npos || FileName.find(".lis" != string::npos))
-  else if(FileName.find(".picoDst.result.root") != string::npos) {
+  else if(FileName.find(".root") != string::npos) {
     t_K->Add(FileName.c_str());
   }
   else {
@@ -227,7 +225,7 @@ TString outFile = "test",
   // int N_entries = t_K -> GetEntries();
   // Get the number of entries in the TTree
 
-  int N_entries = (((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) :  (t_K -> GetEntries());
+  int N_entries =  (t_K -> GetEntries());
   // multi jobs
 
   int pre_runNumber   = -9999;
@@ -240,7 +238,7 @@ TString outFile = "test",
   ////////////////////////////// Read Kaon Info ////////////////////////////////
   int N_events = 0; //count # of events
   // unsigned long int N_max_events = 10;
-  for( int i_entries = /*0*/ (d_entryRange*5550); i_entries< N_entries; i_entries++)
+  for( int i_entries = 0; i_entries< N_entries; i_entries++)
   {
     // if (i_entries > N_max_events) break;
 
@@ -626,12 +624,12 @@ TString outFile = "test",
     bool b_quart = false;
     set<unsigned long long> s_used_mx_events;
     ////////////////// Mixed Invariant mass Event Loop ///////////////////////
-    for(int i = (d_entryRange*5550); i < N_entries; i++)
+    for(int i = 0; i < N_entries; i++)
     {
       // if(i > N_max_events) break;
-      if(( i > ((double) (N_entries-d_entryRange*5550)/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (3.0*(N_entries-d_entryRange*5550))/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (N_entries-d_entryRange*5550)/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
+      if(( i > ((double) (N_entries)/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+      if(( i > ((double) (3.0*(N_entries))/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+      if(( i > ((double) (N_entries)/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
       t_K -> GetEntry(i);
       bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
       unsigned int i_runNumber0   = t_K -> GetLeaf("runNumber")->GetValue(0);
