@@ -275,8 +275,10 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     runNumber        = event->runId();
     eventNumber      = event->eventId();
 
-    double d_MagField = event->bField();
-
+    Double_t primaryVertex_X    = (Double_t)event->primaryVertex().X();
+    Double_t primaryVertex_Y    = (Double_t)event->primaryVertex().Y();
+    Double_t primaryVertex_Z    = (Double_t)event->primaryVertex().Z();
+    Double_t primaryVertex_perp = (Double_t)event->primaryVertex().Perp();
     //============================ Trigger Selection ==============================================
     triggerIDs.clear();
     triggerIDs       = event->triggerIds();
