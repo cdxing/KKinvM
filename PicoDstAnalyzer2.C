@@ -293,8 +293,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
     //=========================== End Trigger Slection ===========================================
 
     TVector3 pVtx     = event->primaryVertex();
-    Double_t primaryVertex_perp = (Double_t)event->primaryVertex().Perp();
-
     // Primary Vertex
 
     //=========================== Z-VTX Selection =================================================
@@ -640,7 +638,6 @@ void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_161400
         if( (d_mom0<d_mom_min) || (d_mom0 > d_mom_max)) continue;
         //pT Min, Mom Min Cut
 
-        bool b_bad_DCA       = false;
         StPicoPhysicalHelix trackhelix = picoTrack->helix(B);
         double helixpathl              = trackhelix.pathLength(v3D_vtx, false);
         TVector3 v3D_dca               = trackhelix.at(helixpathl)-v3D_vtx;
