@@ -198,11 +198,11 @@ void ReadKaonTTree( string FileName,
   {
     for(int cent=0; cent<9;cent++){
       mHist_SE_InvM_ptSetA_centSetB[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetA%d_centSetB%d",pt,cent),
-      Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_SE_InvM_ptSetA_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
       mHist_ME_InvM_ptSetA_centSetB[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetA%d_centSetB%d",pt,cent),
-      Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_ME_InvM_ptSetA_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
@@ -230,11 +230,11 @@ void ReadKaonTTree( string FileName,
   {
     for(int cent=0; cent<9;cent++){
       mHist_SE_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetB%d_centSetB%d",pt,cent),
-      Form("SE, %d<pt<%d, %d-%d%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_SE_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
       mHist_ME_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetB%d_centSetB%d",pt,cent),
-      Form("ME, %d<pt<%d, %d-%d%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_ME_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
@@ -246,11 +246,11 @@ void ReadKaonTTree( string FileName,
   {
     for(int cent=0; cent<2;cent++){
       mHist_SE_InvM_ptSetC_centAll[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetC%d_centAll%d",pt,cent),
-      Form("SE, %d<pt<%d, %d-%d%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
+      Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
       200,0.9,1.1);
       mHist_SE_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
       mHist_ME_InvM_ptSetC_centAll[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetC%d_centAll%d",pt,cent),
-      Form("ME, %d<pt<%d, %d-%d%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
+      Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
       200,0.9,1.1);
       mHist_SE_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
@@ -278,11 +278,11 @@ void ReadKaonTTree( string FileName,
   {
     for(int cent=0; cent<9;cent++){
       mHist_SE_InvM_rapSetA_centSetB[rap][cent] = new TH1D(Form("Hist_SE_InvM_rapSetA%d_centSetB%d",rap,cent),
-      Form("SE, %d<y<%d, %d-%d%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
+      Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_SE_InvM_rapSetA_centSetB[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
       mHist_ME_InvM_rapSetA_centSetB[rap][cent] = new TH1D(Form("Hist_ME_InvM_rapSetA%d_centSetB%d",rap,cent),
-      Form("ME, %d<y<%d, %d-%d%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
+      Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_ME_InvM_rapSetA_centSetB[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
@@ -511,49 +511,49 @@ void ReadKaonTTree( string FileName,
   // -------------------------------- Set titles -------------------------------
   for(int i=0; i<4; i++)
   {// pt SetB, cent SetA
-    mHist_SE_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_SE_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_SE_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_SE_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_SE_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_SE_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_SE_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
 
-    mHist_ME_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_ME_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_ME_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_ME_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_ME_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_ME_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_ME_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
     // rap SetA, cent SetA
-    mHist_SE_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_SE_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_SE_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_SE_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_SE_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_SE_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_SE_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("SE, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
 
-    mHist_ME_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_ME_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_ME_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_ME_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_ME_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_ME_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_ME_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("ME, %3.1<y<%3.1, %3.0-%3.0%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
   }
   for(int pt=0; pt<2; pt++)
   {// pt SetA, cent SetA
-    mHist_SE_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
-    mHist_SE_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
-    mHist_SE_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
-    mHist_SE_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
-    mHist_SE_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
-    mHist_SE_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("SE, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
 
-    mHist_ME_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
-    mHist_ME_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
-    mHist_ME_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
-    mHist_ME_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
-    mHist_ME_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
-    mHist_ME_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("ME, %3.1<pt<%3.1, %3.0-%3.0%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
   }
 
   hist_SE_mass_Phi->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
