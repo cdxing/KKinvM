@@ -660,8 +660,8 @@ void ReadKaonTTree( string FileName,
       double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
       double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
 
-      double d_M1  = d_K_m;
-      double d_M0  = d_K_m;
+      double d_M1  = _d_K_m;
+      double d_M0  = _d_K_m;
       double d_E0  = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
       double d_E1  = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
       double d_y0  = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
