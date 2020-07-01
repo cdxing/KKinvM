@@ -173,7 +173,7 @@ void ReadKaonTTree( string FileName,
 
   double centSetA[5]  = {0, 10, 40, 60, 80}; // %
   double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
-
+  Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
   // pt SetA, cent SetA
   TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
   TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
@@ -476,7 +476,6 @@ void ReadKaonTTree( string FileName,
         // Same Event nGoodTracks1 == nGoodTracks0
         Int_t centrality = 0;
         bool a_b_cent[_Ncentralities]={false};
-        Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
         bool b_pileup   = (nGoodTracks1 > 245);
         bool b_low_mult = (nGoodTracks1 < 5);
         a_b_cent[0]     = (nGoodTracks1 >= cenSection[7] && nGoodTracks1 < cenSection[8]); // 0 - 5%, cent 1
@@ -557,7 +556,197 @@ void ReadKaonTTree( string FileName,
       }
     }
   }
+  // ====================== (5) Mixed Event K+/- pairs loop ====================
+  int j_start = 0;
+  unsigned long long pre_event_pl_runnumber = 9999;
+  unsigned long long this_mixed_event_pl_runnumber = 9999;
+  bool b_found_mixed_evt = false;
+  unsigned int i_found_mixed_evt = 0;
+  bool b_half  = false;
+  bool b_quart = false;
+  for(int i=0;i<N_entries;i++){
+    if(( i > ((double) N_entries/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+    if(( i > ((double) (3.0*N_entries)/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
+    if(( i > ((double) N_entries/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
+    t_K -> GetEntry(i);
+    bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+    unsigned int i_runNumber0   = t_K-> GetLeaf("runNumber")->GetValue(0);
+    unsigned int i_eventNumber0 = t_K-> GetLeaf("eventNumber")->GetValue(0);
+    int    nGoodTracks0         = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+    double d_xvtx0              = t_K-> GetLeaf("x_vtx")->GetValue(0);
+    double d_yvtx0              = t_K-> GetLeaf("y_vtx")->GetValue(0);
+    double d_zvtx0              = t_K-> GetLeaf("z_vtx")->GetValue(0);
+    double px0                  = t_K-> GetLeaf("px")->GetValue(0);
+    double py0                  = t_K-> GetLeaf("py")->GetValue(0);
+    double pz0                  = t_K-> GetLeaf("pz")->GetValue(0);
+    double  d_tofBeta0          = t_K-> GetLeaf("tofBeta")->GetValue(0);
+    double  DCA_r0              = t_K-> GetLeaf("DCA_r")->GetValue(0);
+    double  d_TPCnSigmaKaon0    = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
+    // double d_dEdx0           = t_K -> GetLeaf("dEdx")->GetValue(0);
+    double d_pT0    = sqrt(px0*px0+py0*py0);
+    double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
+    double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
+    double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+    unsigned long long event_pl_runnumber0 = (i_runNumber0-19150000)*10000000+i_eventNumber0;
+    if(event_pl_runnumber0 != pre_event_pl_runnumber) {
+      j_start = i+1; // ME start from the next entry in kaon TTree
+      pre_event_pl_runnumber = event_pl_runnumber0;
+      b_found_mixed_evt = false;
+    }
+    // K0 track event centrality
+    Int_t centrality0 = 0;
+    bool a_b_cent0[_Ncentralities]={false};
+    bool b_pileup0   = (nGoodTracks0 > 245);
+    bool b_low_mult0 = (nGoodTracks0 < 5);
+    a_b_cent0[0]     = (nGoodTracks0 >= cenSection[7] && nGoodTracks0 < cenSection[8]); // 0 - 5%, cent 1
+    a_b_cent0[1]     = (nGoodTracks0 >= cenSection[6] && nGoodTracks0 < cenSection[7]); // 5 - 10%, cent 2
+    a_b_cent0[2]     = (nGoodTracks0 >= cenSection[5] && nGoodTracks0 < cenSection[6]); // 10 - 20%, cent 3
+    a_b_cent0[3]     = (nGoodTracks0 >= cenSection[4]  && nGoodTracks0 < cenSection[5]); // 20 - 30%, cent 4
+    a_b_cent0[4]     = (nGoodTracks0 >= cenSection[3]  && nGoodTracks0 < cenSection[4]); // 30 - 40%, cent 5
+    a_b_cent0[5]     = (nGoodTracks0 >= cenSection[2]  && nGoodTracks0 < cenSection[3]); // 40 - 50%, cent 6
+    a_b_cent0[6]     = (nGoodTracks0 >= cenSection[1]  && nGoodTracks0 < cenSection[2]); // 50 - 60%, cent 7
+    a_b_cent0[7]     = (nGoodTracks0 >= cenSection[0]  && nGoodTracks0 < cenSection[1]); // 60 - 70%, cent 8
+    a_b_cent0[8]     = (nGoodTracks0 >= 5  && nGoodTracks0 < cenSection[0]); // 70 - 80%, cent 9
+    for(int i=0;i<_Ncentralities;i++){
+      if(a_b_cent0[i]) centrality0 = i+1;
+    }
+    // ====================== (5.1) Mixed Event K- loop ========================
+    for(int j=j_start;j<N_entries;j++){
+      t_K -> GetEntry(j);
+      double                         d_xvtx1 = t_K -> GetLeaf("x_vtx")->GetValue(0);
+      double                         d_yvtx1 = t_K -> GetLeaf("y_vtx")->GetValue(0);
+      double                         d_zvtx1 = t_K -> GetLeaf("z_vtx")->GetValue(0);
+      unsigned int            i_runNumber1   = t_K -> GetLeaf("runNumber")->GetValue(0);
+      unsigned int            i_eventNumber1 = t_K -> GetLeaf("eventNumber")->GetValue(0);
+      unsigned long long event_pl_runnumber1 = (i_runNumber1-19150000)*10000000+i_eventNumber1;
+      int                   nGoodTracks1     = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+      bool                     b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+      if(event_pl_runnumber0 == event_pl_runnumber1) continue; // skip SE
+      if(b_found_mixed_evt && (event_pl_runnumber1 != this_mixed_event_pl_runnumber) && i_found_mixed_evt >= 5 ){
+        break; // found 5 ME
+      }
+      if(fabs(d_zvtx1 - d_zvtx0)>0.5) continue; //bad zvtx
+      if(b_pos_charge0 == b_pos_charge1) continue; // require opposite charge +-/-+ mixed events
+      Int_t centrality1 = 0;
+      bool a_b_cent1[_Ncentralities]={false};
+      bool b_pileup1   = (nGoodTracks1 > 245);
+      bool b_low_mult1 = (nGoodTracks1 < 5);
+      a_b_cent1[0]     = (nGoodTracks1 >= cenSection[7] && nGoodTracks1 < cenSection[8]); // 0 - 5%, cent 1
+      a_b_cent1[1]     = (nGoodTracks1 >= cenSection[6] && nGoodTracks1 < cenSection[7]); // 5 - 10%, cent 2
+      a_b_cent1[2]     = (nGoodTracks1 >= cenSection[5] && nGoodTracks1 < cenSection[6]); // 10 - 20%, cent 3
+      a_b_cent1[3]     = (nGoodTracks1 >= cenSection[4]  && nGoodTracks1 < cenSection[5]); // 20 - 30%, cent 4
+      a_b_cent1[4]     = (nGoodTracks1 >= cenSection[3]  && nGoodTracks1 < cenSection[4]); // 30 - 40%, cent 5
+      a_b_cent1[5]     = (nGoodTracks1 >= cenSection[2]  && nGoodTracks1 < cenSection[3]); // 40 - 50%, cent 6
+      a_b_cent1[6]     = (nGoodTracks1 >= cenSection[1]  && nGoodTracks1 < cenSection[2]); // 50 - 60%, cent 7
+      a_b_cent1[7]     = (nGoodTracks1 >= cenSection[0]  && nGoodTracks1 < cenSection[1]); // 60 - 70%, cent 8
+      a_b_cent1[8]     = (nGoodTracks1 >= 5  && nGoodTracks1 < cenSection[0]); // 70 - 80%, cent 9
+      for(int i=0;i<_Ncentralities;i++){
+        if(a_b_cent1[i]) centrality1 = i+1;
+      }
+      if(centrality1!=centrality0) continue; // require same centrality of the two mixed events
+      // Found ME
+      b_found_mixed_evt = true;
+      i_found_mixed_evt++;
+      this_mixed_event_pl_runnumber = event_pl_runnumber1;
+      double               px1 = t_K-> GetLeaf("px")->GetValue(0);
+      double               py1 = t_K-> GetLeaf("py")->GetValue(0);
+      double               pz1 = t_K-> GetLeaf("pz")->GetValue(0);
+      double  DCA_r1           = t_K-> GetLeaf("DCA_r")->GetValue(0);
+      double  d_TPCnSigmaKaon1 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
+      double  d_tofBeta1       = t_K-> GetLeaf("tofBeta")->GetValue(0);
+      // double d_dEdx1           = t_K -> GetLeaf("dEdx")->GetValue(0);
+      double d_pT1   = sqrt(px1*px1+py1*py1);
+      double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
+      double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
+      double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
 
+      double d_M1  = d_K_m;
+      double d_M0  = d_K_m;
+      double d_E0  = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
+      double d_E1  = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
+      double d_y0  = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
+      double d_y1  = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
+      double d_mT0 = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
+      double d_mT1 = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
+      // phi physics variables
+      double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
+      double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+      double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + _m_phi*_m_phi );
+      double d_phi_pz = pz0+pz1;
+      double d_phi_E  = d_E0+d_E1;
+      double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
+      double d_inv_m  = sqrt( d_M0*d_M0
+                             +d_M1*d_M1
+                             +2.0*d_E0*d_E1
+                             -2.0*(px0*px1+py0*py1+pz0*pz1) );
+      hist_ME_mass_Phi->Fill(d_inv_m);
+      if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+      if(d_dip_angle<0.04) continue; // dip-angle cut
+      // -------------------- (5.1.2) Fill ME InvM plots -------------------------
+      for(int pt=0; pt<2; pt++)
+      {// pt SetA, cent SetA
+        if(d_Phi_pT >= ptSetA[pt] && d_Phi_pT <= ptSetA[pt+1]){
+          if(centrality1 >= 1 && centrality1 <= 2) mHist_ME_InvM_ptSetA_centSetA[pt][0]->Fill(d_inv_m); // 0-10%
+          if(centrality1 >= 3 && centrality1 <= 5) mHist_ME_InvM_ptSetA_centSetA[pt][1]->Fill(d_inv_m); // 10-40%
+          if(centrality1 >= 6 && centrality1 <= 7) mHist_ME_InvM_ptSetA_centSetA[pt][2]->Fill(d_inv_m); // 40-60%
+          if(centrality1 >= 6 && centrality1 <= 9) mHist_ME_InvM_ptSetA_centSetA[pt][3]->Fill(d_inv_m); // 40-80%
+          if(centrality1 >= 1 && centrality1 <= 7) mHist_ME_InvM_ptSetA_centSetA[pt][4]->Fill(d_inv_m); // 0-60%
+          if(centrality1 >= 1 && centrality1 <= 9) mHist_ME_InvM_ptSetA_centSetA[pt][5]->Fill(d_inv_m); // 0-80%
+        }
+      }
+      for(int pt=0; pt<2; pt++)
+      {// pt SetA, cent SetB
+        for(int cent=0; cent<9;cent++){
+          if(d_Phi_pT >= ptSetA[pt] && d_Phi_pT <= ptSetA[pt+1]){
+            if(centrality1 == cent+1 ) mHist_ME_InvM_ptSetA_centSetB[pt][cent]->Fill(d_inv_m);
+          }
+        }
+      }
+      for(int i=0; i<4; i++)
+      {// pt SetB, cent SetA
+        if(d_Phi_pT >= ptSetB[i] && d_Phi_pT <= ptSetB[i+1]){
+          if(centrality1 >= 1 && centrality1 <= 2) mHist_ME_InvM_ptSetB_centSetA[i][0]->Fill(d_inv_m); // 0-10%
+          if(centrality1 >= 3 && centrality1 <= 5) mHist_ME_InvM_ptSetB_centSetA[i][1]->Fill(d_inv_m); // 10-40%
+          if(centrality1 >= 6 && centrality1 <= 7) mHist_ME_InvM_ptSetB_centSetA[i][2]->Fill(d_inv_m); // 40-60%
+          if(centrality1 >= 6 && centrality1 <= 9) mHist_ME_InvM_ptSetB_centSetA[i][3]->Fill(d_inv_m); // 40-80%
+          if(centrality1 >= 1 && centrality1 <= 7) mHist_ME_InvM_ptSetB_centSetA[i][4]->Fill(d_inv_m); // 0-60%
+          if(centrality1 >= 1 && centrality1 <= 9) mHist_ME_InvM_ptSetB_centSetA[i][5]->Fill(d_inv_m); // 0-80%
+        }
+
+        // rap SetA, cent SetA
+        if(d_phi_y >= rapSetA[i] && d_phi_y <= rapSetA[i+1]){
+          if(centrality1 >= 1 && centrality1 <= 2) mHist_ME_InvM_rapSetA_centSetA[i][0]->Fill(d_inv_m); // 0-10%
+          if(centrality1 >= 3 && centrality1 <= 5) mHist_ME_InvM_rapSetA_centSetA[i][1]->Fill(d_inv_m); // 10-40%
+          if(centrality1 >= 6 && centrality1 <= 7) mHist_ME_InvM_rapSetA_centSetA[i][2]->Fill(d_inv_m); // 40-60%
+          if(centrality1 >= 6 && centrality1 <= 9) mHist_ME_InvM_rapSetA_centSetA[i][3]->Fill(d_inv_m); // 40-80%
+          if(centrality1 >= 1 && centrality1 <= 7) mHist_ME_InvM_rapSetA_centSetA[i][4]->Fill(d_inv_m); // 0-60%
+          if(centrality1 >= 1 && centrality1 <= 9) mHist_ME_InvM_rapSetA_centSetA[i][5]->Fill(d_inv_m); // 0-80%
+        }
+        for(int cent=0; cent<9;cent++){
+          if(d_phi_y >= rapSetA[i] && d_phi_y <= rapSetA[i+1]){
+            if(centrality1 == cent+1 ) mHist_ME_InvM_rapSetA_centSetB[i][cent]->Fill(d_inv_m);
+          }
+        }
+      }
+      for(int pt=0; pt<4; pt++)
+      {// pt SetB, cent SetB
+        for(int cent=0; cent<9;cent++){
+          if(d_Phi_pT >= ptSetB[pt] && d_Phi_pT <= ptSetB[pt+1]){
+            if(centrality1 == cent+1 ) mHist_ME_InvM_ptSetB_centSetB[pt][cent]->Fill(d_inv_m);
+          }
+        }
+      }
+      for(int pt=0; pt<10; pt++)
+      {// pt SetC, cent 0-60%, 0-80%
+        for(int cent=0; cent<2;cent++){
+          if(d_Phi_pT >= ptSetC[pt] && d_Phi_pT <= ptSetC[pt+1]){
+            if(centrality1 >= 1 && centrality1 <= cent*2 + 7 ) mHist_ME_InvM_ptSetC_centAll[pt][cent]->Fill(d_inv_m);
+          }
+        }
+      }
+
+    }
+  }
   // -------------------------------- Set titles -------------------------------
   for(int i=0; i<4; i++)
   {// pt SetB, cent SetA
