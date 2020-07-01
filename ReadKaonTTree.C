@@ -1,8 +1,16 @@
 /**
+  * From Jason Brylawskyj
+  *
   * \Update to analyze 3p85_FXT_2018
   * \author Ding Chen
   * \date Feb 24, 2020
+  *
+  * \Upadate to analyze 26p5_FXT_2018 data, new centrality def, new kaon TTree
+  * \author Ding Chen
+  * \date Jun 29, 2020
   */
+
+// C++ classes
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -10,6 +18,8 @@
 #include <math.h>
 #include <set>
 #include <map>
+
+// ROOT classes
 #include <TROOT.h>
 #include <TApplication.h>
 #include <TSystem.h>
@@ -17,7 +27,6 @@
 #include <TGraph.h>
 #include <TStreamerElement.h>
 #include <TStyle.h>
-
 #include "Riostream.h"
 #include "TSystemDirectory.h"
 #include "TFile.h"
@@ -36,23 +45,11 @@
 #include "TObject.h"
 #include "TLine.h"
 #include "TLeaf.h"
-#include "TF1.h"
-#include "TH1.h"
-#include "TH2.h"
-#include "TH3.h"
 #include "TGaxis.h"
 #include "TSpectrum.h"
-#include "TMath.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TMultiGraph.h"
-#include "TChain.h"
-#include "TLegend.h"
-#include "TFractionFitter.h"
-#include "TVirtualFitter.h"
-#include "TCut.h"
-#include "TObject.h"
-#include "TLine.h"
 #include "TSpline.h"
 #include "TPaveText.h"
 #include "Fit/FitResult.h"
@@ -63,11 +60,11 @@
 #include "Math/MinimizerOptions.h"
 
 using namespace std;
-
-bool b_K_min_check = false;
-bool b_K_pl_check  = false;
-// Kaon + - check?
-struct st_track
+const Int_t _Ncentralities = 9; // 9 centrality bins
+const double _d_K_m        = 0.493677;
+const double _m_phi        = 1.019461;
+// ======================== (1) prerequsites for read kaon TTree ===============
+struct st_track // Useful Physics information of a track (from kaon TTree)
 {
   bool  b_pos_charge;
   bool  b_bad_TOF;
@@ -85,166 +82,222 @@ struct st_track
   double  z_vtx;
 
   double  tofBeta;
+  // double  dEdx;
   double  DCA_r;
   double  d_TPCnSigmaKaon;
-
+  double  d_TOFnSigmaKaon
 };
-//st_track structure
-
-struct st_event
+struct st_event // Positive and negative tracks of an event
 {
   vector<st_track> v_trk_pl;
   vector<st_track> v_trk_mi;
 };
-
-TFile * tf_in = 0;
 TChain * t_K   = new TChain("t_K");
-// TTree * t_K   = 0;
 
-/////////////////////////////// Main Function //////////////////////////////////
+// =============================== (2) Analysis Start ==========================
 void ReadKaonTTree( string FileName,
-TString outFile = "test",
- double inputParameter1 = 0.
-)
-{
-  // Systematic analysis parameters
-  Double_t d_entryRange = inputParameter1;
-  const double d_K_m        = 0.493696;
-
-  outFile.Append(".readKTree.result.root");
-  TFile * tf_KPlusEffTable_in   = new TFile("/star/data01/pwg/dchen/offline/paper/psn0716/p_pi_v1/fixed_target_efficiency_acceptance_factors_from_embedding/KPlusEffTable.root","READ");
-  TFile * tf_KMinusEffTable_in  = new TFile("/star/data01/pwg/dchen/offline/paper/psn0716/p_pi_v1/fixed_target_efficiency_acceptance_factors_from_embedding/KMinusEffTable.root","READ");
-  TFile * tf_out = new TFile(outFile,"RECREATE");
-
-  TH3D * h3_KPlusEffTable_input  = (TH3D*) tf_KPlusEffTable_in->Get("KPlusEffTable");
-  TH3D * h3_KMinusEffTable_input = (TH3D*) tf_KMinusEffTable_in->Get("KMinusEffTable");
-
-  TH1D * h_prim_inv_m_PHI     = new TH1D("h_prim_inv_m_PHI","h_prim_inv_m_PHI",100,0.9,1.1);
-  TH1D * h_mx_prim_inv_m_PHI = new TH1D("h_mx_prim_inv_m_PHI","h_mx_prim_inv_m_PHI",100,0.9,1.1);
-  TH1D * h_dip_angle = new TH1D("h_dip_angle","h_dip_angle",1000,-1,1.0);
-  TH1D * h_Kmin_TPC2_TOF3_pT = new TH1D("h_Kmin_TPC2_TOF3_pT","h_Kmin_TPC2_TOF3_pT",200,0.0,10);
-  TH1D * h_Kpl_TPC2_TOF3_pT  = new TH1D("h_Kpl_TPC2_TOF3_pT","h_Kpl_TPC2_TOF3_pT",200,0.0,10);
-  TH1D * h_phi_TPC2_TOF3_pT  = new TH1D("h_phi_TPC2_TOF3_pT","h_phi_TPC2_TOF3_pT",200,0.0,10);
-  TH1D * h_phi_TPC2_TOF3_mT  = new TH1D("h_phi_TPC2_TOF3_mT","h_phi_TPC2_TOF3_mT",200,0.0,10);
-  TH1D * h_phi_TPC2_TOF3_y  = new TH1D("h_phi_TPC2_TOF3_y","h_phi_TPC2_TOF3_y",200,-10.,10);
-  TH1D * h_phi_TPC2_TOF3_tight_y  = new TH1D("h_phi_TPC2_TOF3_tight_y","h_phi_TPC2_TOF3_tight_y",200,-10.0,10.0);
-
-  // QA plots
-  TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonPlus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
-  TH2D *hist_pt_y_kaonMinus = new TH2D("hist_pt_y_kaonMinus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonMinus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
-  TH1D * h_eff_corr0                      = new TH1D("h_eff_corr0","h_eff_corr0",200,-10,10);
-  TH1D * h_eff_corr1                      = new TH1D("h_eff_corr1","h_eff_corr1",200,-10,10);
-
-  TH2D * h2_TOF_beta_pq                  = new TH2D("h2_TOF_beta_pq","h2_TOF_beta_pq",500,-2,2,500,0,3);
-  TH2D * h2_dEdx_pq                      = new TH2D("h2_dEdx_pq","h2_dEdx_pq",500,-2,2,500,2e-6,10e-6);
-
-  TH3D * h3_TOF_beta_pq_vs_nsig          = new TH3D("h3_TOF_beta_pq_vs_nsig","h3_TOF_beta_pq_vs_nsig",500,-2,2,500,0,3,100,0.0,10.0);
-  TH3D * h3_dEdx_pq_vs_nsig              = new TH3D("h3_dEdx_pq_vs_nsig","h3_dEdx_pq_vs_nsig",500,-2,2,500,2e-6,10e-6,100,0.0,10.0);
-
-  TH2D * h2_TOF_beta_TPC2sig_TOF_3sig_pq = new TH2D("h2_TOF_beta_TPC2sig_TOF_3sig_pq","h2_TOF_beta_TPC2sig_TOF_3sig_pq",500,-2,2,500,0,3);
-  TH2D * h2_dEdx_TPC2sig_TOF_3sig_pq     = new TH2D("h2_dEdx_TPC2sig_TOF_3sig_pq","h2_dEdx_TPC2sig_TOF_3sig_pq",500,-2,2,500,2e-6,10e-6);
-
-  TH1D * h_K_pl_pT  = new TH1D("h_K_pl_pT","h_K_pl_pT",200,0.0,10);
-  TH1D * h_K_min_pT = new TH1D("h_K_min_pT","h_K_min_pT",200,0.0,10);
-
-  TH1D * h_K_pl_eta  = new TH1D("h_K_pl_eta","h_K_pl_eta",200,-10,10);
-  TH1D * h_K_min_eta = new TH1D("h_K_min_eta","h_K_min_eta",200,-10,10);
-  // END QA plots
-  TH1D * h_TPC2_TOF3_invM = new TH1D("h_TPC2_TOF3_invM","M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}",100,0.9,1.1);
-  TH1D * h_TPC2_TOF3_invM_y_bin1 = new TH1D("h_TPC2_TOF3_invM_y_bin1","M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -2.0 <= y < -1.5",100,0.9,1.1);
-  TH1D * h_TPC2_TOF3_invM_y_bin2 = new TH1D("h_TPC2_TOF3_invM_y_bin2","M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -1.5 <= y < -1.0",100,0.9,1.1);
-  TH1D * h_TPC2_TOF3_invM_y_bin3 = new TH1D("h_TPC2_TOF3_invM_y_bin3","M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -1.0 <= y < -0.5",100,0.9,1.1);
-  TH1D * h_TPC2_TOF3_invM_y_bin4 = new TH1D("h_TPC2_TOF3_invM_y_bin4","M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -0.5 <= y <= 0.0",100,0.9,1.1);
-
-  TH1D * h_mx_TPC2_TOF3_invM = new TH1D("h_mx_TPC2_TOF3_invM","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}",100,0.9,1.1);
-  TH1D * h_mx_TPC2_TOF3_invM_y_bin1 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin1","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -2.0 <= y < -1.5",100,0.9,1.1);
-  TH1D * h_mx_TPC2_TOF3_invM_y_bin2 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin2","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -1.5 <= y < -1.0",100,0.9,1.1);
-  TH1D * h_mx_TPC2_TOF3_invM_y_bin3 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin3","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -1.0 <= y < -0.5",100,0.9,1.1);
-  TH1D * h_mx_TPC2_TOF3_invM_y_bin4 = new TH1D("h_mx_TPC2_TOF3_invM_y_bin4","Mixed Events M_{K+K-} TPC < 2#sigma, 0.15 < M_{K}^{2} < 0.35(Gev/c^{2})^{2}, -0.5 <= y <= 0.0",100,0.9,1.1);
-
-  TH1D *mHistKKInvMpT[12];
-  for(int pt=0; pt<12; pt++)
-  {
-    mHistKKInvMpT[pt] = new TH1D(Form("histKKInvMpT%d",pt),Form("histKKInvMpT%d",pt),100,0.9,1.1);
-  }
-
-  TH1D *mHistKKInvMpTMixed[12];
-  for(int pt=0; pt<12; pt++)
-  {
-    mHistKKInvMpTMixed[pt] = new TH1D(Form("histKKInvMpT%d_Mixed",pt),Form("histKKInvMpT%d_Mixed",pt),100,0.9,1.1);
-  }
-  // tf_in = TFile::Open( FileName );
-  // if( !tf_in || tf_in->IsZombie() ){cout << "Error:Could not open, "<<FileName << endl;return;}
-  // else{ cout << "Opened " << FileName << endl; }
-  // // t_K = (TTree*) tf_in->Get("t_K");
-  // string const dirFile = FileName.data();
+                   TString outFile = "test",
+                    double inputParameter1 = 0.
+){
+  // ----------------------------- read TTree ----------------------------------
   if( FileName.find(".list") != string::npos ||
       FileName.find(".lis") != string::npos ) {
-
     std::ifstream inputStream( FileName.c_str() );
-
     if(!inputStream) {
       cout << "ERROR: Cannot open list file " << FileName << endl;
     }
-
     Int_t nFile = 0;
     string file;
     while(getline(inputStream, file)) {
-      if(file.find(".picoDst.result.root") != string::npos) {
+      if(file.find(".root") != string::npos) {
         TFile* ftmp = TFile::Open(file.c_str());
         if(ftmp && !ftmp->IsZombie() && ftmp->GetNkeys()) {
-          cout << " Read in picoDst file " << file << endl;
+          cout << " Read in root file " << file << endl;
           t_K->Add(file.c_str());
           ++nFile;
         } //if(ftmp && !ftmp->IsZombie() && ftmp->GetNkeys())
-
         if (ftmp) {
           ftmp->Close();
         } //if (ftmp)
       } //if(file.find(".picoDst.root") != string::npos)
     } //while (getline(inputStream, file))
-
     cout << " Total " << nFile << " files have been read in. " << endl;
   } //if(FileName.find(".list") != string::npos || FileName.find(".lis" != string::npos))
-  else if(FileName.find(".picoDst.result.root") != string::npos) {
+  else if(FileName.find(".root") != string::npos) {
     t_K->Add(FileName.c_str());
   }
   else {
     cout << " No good input file to read ... " << endl;
   }
-  // t_K->Add(FileName.Data());
-
   if( t_K->GetEntries() == 0 ){cout << "Error:Could not find 't_K' in file: " << FileName << endl; return;}
 
-  // if( t_K==0 ){cout << "Error:Could not find 't_K' in file: " << FileName << endl; return;}
-
-  // int N_entries = t_K -> GetEntries();
+  // multi job for ME using script
+  Double_t d_entryRange = inputParameter1;
+  int N_entries = t_K -> GetEntries();
   // Get the number of entries in the TTree
 
-  int N_entries = (((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) :  (t_K -> GetEntries());
-  // multi jobs
+  // int N_entries = (((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) :  (t_K -> GetEntries());
 
-  int pre_runNumber   = -9999;
-  int pre_eventNumber = -9999;
-  // To make sure run the next event
+  // ---------------------------- Output file and Hists ------------------------
+  outFile.Append(".readKTree.result.root");
+  TFile * tf_out = new TFile(outFile,"RECREATE");
+  TH1D * hist_SE_mass_Phi     = new TH1D("hist_SE_mass_Phi","Same event invariant mass",200,0.9,1.1);
+  TH1D * hist_ME_mass_Phi     = new TH1D("hist_ME_mass_Phi","Mixed event invariant mass",200,0.9,1.1);
+  // ------------------------------- QA plots ----------------------------------
+  TH1D *hist_SE_PhiMeson_pT  = new TH1D("hist_SE_PhiMeson_pT","pT distribution of #phi",200,0.0,10);
+  TH1D *hist_SE_PhiMeson_mT  = new TH1D("hist_SE_PhiMeson_mT","mT distribution of #phi",200,0.0,10);
+  TH1D *hist_SE_PhiMeson_rap  = new TH1D("hist_SE_PhiMeson_rap","y distribution of #phi",200,-10.,10);
+  TH1D *hist_PhiMeson_tight_rap  = new TH1D("hist_PhiMeson_tight_rap","y distribution with tight cuts of #phi",200,-10.0,10.0);
+  TH2D *hist_SE_pt_y_PhiMeson = new TH2D("hist_SE_pt_y_PhiMeson","p_{T} [GeV/c] vs. y of #phi",500,-3.0,0.5,500,0.0,3.5);
+  TH2D * h2_TOF_beta_pq                  = new TH2D("h2_TOF_beta_pq","1/#beta vs. pq",500,-3,3,500,0,3);
+  TH2D * h2_dEdx_pq                      = new TH2D("h2_dEdx_pq","dEdx vs. pq",500,-3,3,500,2e-6,10e-6);
+  TH3D * h3_dEdx_pq_vs_nsig              = new TH3D("h3_dEdx_pq_vs_nsig","nSigmaKaon vs. dEdx vs. pq",500,-3,3,500,2e-6,10e-6,100,0.0,10.0);
+  // waiting for dedx value in the K TTree for plots that need dedx info
+  TH1D *hist_dip_angle       = new TH1D("hist_dip_angle","hist_dip_angle",1000,-1,1.0);
+  TH1D *hist_KaonPlus_pT  = new TH1D("hist_KaonPlus_pT","pT distribution of K^{+}",500,0.0,3.5);
+  TH1D *hist_KaonMinus_pT = new TH1D("hist_KaonMinus_pT","pT distribution of K^{-}",500,0.0,3.5);
+  TH1D *hist_KaonPlus_rap  = new TH1D("hist_KaonPlus_rap","y distribution of K^{+}",500,-3.0,0.5);
+  TH1D *hist_KaonMinus_rap = new TH1D("hist_KaonMinus_rap","y distribution of K^{-}",500,-3.0,0.5);
+  TH1D *hist_KaonPlus_eta  = new TH1D("hist_KaonPlus_eta","#eta distribution of K^{+}",500,-3.0,0.5);
+  TH1D *hist_KaonMinus_eta = new TH1D("hist_KaonMinus_eta","#eta distribution of K^{-}",500,-3.0,0.5);
+  TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y of K^{+}",500,-3.0,0.5,500,0.0,3.5);
+  TH2D *hist_pt_y_kaonMinus = new TH2D("hist_pt_y_kaonMinus","p_{T} [GeV/c] vs. y of K^{-}",500,-3.0,0.5,500,0.0,3.5);
+  TH2D *hist_pt_eta_kaonPlus = new TH2D("hist_pt_eta_kaonPlus","p_{T} [GeV/c] vs. #eta of K^{+}",500,-3.0,0.5,500,0.0,3.5);
+  TH2D *hist_pt_eta_kaonMinus = new TH2D("hist_pt_eta_kaonMinus","p_{T} [GeV/c] vs. #eta of K^{-}",500,-3.0,0.5,500,0.0,3.5);
+  // ----- InvMass plots in different centrality and pT or y bins --------------
+  double ptSetA[3]  = {0.4, 1.2, 2.0};
+  double rapSetA[5]  = {0.4, 0.7, 1.0, 1.4, 2.0};
+  double ptSetC[11] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0};
+
+  double rapSetA[5]  = {-2.0, -1.5, -1.0, -0.5, 0};
+
+  double centSetA[5]  = {0, 10, 40, 60, 80}; // %
+  double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
+
+  // pt SetA, cent SetA
+  TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
+  TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
+  for(int pt=0; pt<2; pt++)
+  {
+    for(int cent=0; cent<6;cent++){
+      mHist_SE_InvM_ptSetA_centSetA[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetA%d_centSetA%d",pt,cent),
+      Form("Hist_SE_InvM_ptSetA%d_centSetA%d",pt,cent),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetA_centSetA[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetA_centSetA[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetA%d_centSetA%d",pt,cent),
+      Form("Hist_ME_InvM_ptSetA%d_centSetA%d",pt,cent),
+      200,0.9,1.1);
+      mHist_ME_InvM_ptSetA_centSetA[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // pt SetA, cent SetB
+  TH1D *mHist_SE_InvM_ptSetA_centSetB[2][9];
+  TH1D *mHist_ME_InvM_ptSetA_centSetB[2][9];
+  for(int pt=0; pt<2; pt++)
+  {
+    for(int cent=0; cent<9;cent++){
+      mHist_SE_InvM_ptSetA_centSetB[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetA%d_centSetB%d",pt,cent),
+      Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetA_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetA_centSetB[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetA%d_centSetB%d",pt,cent),
+      Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_ME_InvM_ptSetA_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // pt SetB, cent SetA
+  TH1D *mHist_SE_InvM_ptSetB_centSetA[4][6];
+  TH1D *mHist_ME_InvM_ptSetB_centSetA[4][6];
+  for(int pt=0; pt<4; pt++)
+  {
+    for(int cent=0; cent<6;cent++){
+      mHist_SE_InvM_ptSetB_centSetA[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetB%d_centSetA%d",pt,cent),
+      Form("Hist_SE_InvM_ptSetA%d_centSetA%d",pt,cent),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetB_centSetA[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetB_centSetA[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetB%d_centSetA%d",pt,cent),
+      Form("Hist_ME_InvM_ptSetA%d_centSetA%d",pt,cent),
+      200,0.9,1.1);
+      mHist_ME_InvM_ptSetB_centSetA[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // pt SetB, cent SetB
+  TH1D *mHist_SE_InvM_ptSetB_centSetB[4][9];
+  TH1D *mHist_ME_InvM_ptSetB_centSetB[4][9];
+  for(int pt=0; pt<4; pt++)
+  {
+    for(int cent=0; cent<9;cent++){
+      mHist_SE_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetB%d_centSetB%d",pt,cent),
+      Form("SE, %d<pt<%d, %d-%d%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetB%d_centSetB%d",pt,cent),
+      Form("ME, %d<pt<%d, %d-%d%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_ME_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // pt SetC, cent 0-60%, 0-80%
+  TH1D *mHist_SE_InvM_ptSetC_centAll[10][2];
+  TH1D *mHist_ME_InvM_ptSetC_centAll[10][2];
+  for(int pt=0; pt<10; pt++)
+  {
+    for(int cent=0; cent<2;cent++){
+      mHist_SE_InvM_ptSetC_centAll[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetC%d_centAll%d",pt,cent),
+      Form("SE, %d<pt<%d, %d-%d%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetC_centAll[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetC%d_centAll%d",pt,cent),
+      Form("ME, %d<pt<%d, %d-%d%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
+      200,0.9,1.1);
+      mHist_SE_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // rap SetA, cent SetA
+  TH1D *mHist_SE_InvM_rapSetA_centSetA[4][6];
+  TH1D *mHist_ME_InvM_rapSetA_centSetA[4][6];
+  for(int rap=0; rap<4; rap++)
+  {
+    for(int cent=0; cent<6;cent++){
+      mHist_SE_InvM_rapSetA_centSetA[rap][cent] = new TH1D(Form("Hist_SE_InvM_rapSetA%d_centSetA%d",rap,cent),
+      Form("Hist_SE_InvM_rapSetA%d_centSetA%d",rap,cent),
+      200,0.9,1.1);
+      mHist_SE_InvM_rapSetA_centSetA[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_rapSetA_centSetA[rap][cent] = new TH1D(Form("Hist_ME_InvM_rapSetA%d_centSetA%d",rap,cent),
+      Form("Hist_ME_InvM_rapSetA%d_centSetA%d",rap,cent),
+      200,0.9,1.1);
+      mHist_ME_InvM_rapSetA_centSetA[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // rap SetA, cent SetB
+  TH1D *mHist_SE_InvM_rapSetA_centSetB[4][9];
+  TH1D *mHist_ME_InvM_rapSetA_centSetB[4][9];
+  for(int rap=0; rap<4; rap++)
+  {
+    for(int cent=0; cent<9;cent++){
+      mHist_SE_InvM_rapSetA_centSetB[rap][cent] = new TH1D(Form("Hist_SE_InvM_rapSetA%d_centSetB%d",rap,cent),
+      Form("SE, %d<y<%d, %d-%d%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_SE_InvM_rapSetA_centSetB[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_rapSetA_centSetB[rap][cent] = new TH1D(Form("Hist_ME_InvM_rapSetA%d_centSetB%d",rap,cent),
+      Form("ME, %d<y<%d, %d-%d%%",rapSetA[rap],rapSetA[rap+1],centSetB[cent],centSetB[cent+1]),
+      200,0.9,1.1);
+      mHist_ME_InvM_rapSetA_centSetB[rap][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+    }
+  }
+  // ============== (3) First TTree loop to get vector of events ===============
+  int pre_runNumber   = -999;
+  int pre_eventNumber = -999;
+  // Identify same/differnt event(s)
+  // vector of tracks and events
   vector<st_track> v_trk_pl;
   vector<st_track> v_trk_mi;
-
   vector<st_event> v_evt;
-  ////////////////////////////// Read Kaon Info ////////////////////////////////
   int N_events = 0; //count # of events
-  // unsigned long int N_max_events = 10;
-  for( int i_entries = /*0*/ (d_entryRange*5550); i_entries< N_entries; i_entries++)
-  {
-    // if (i_entries > N_max_events) break;
-
-    t_K -> GetEntry(i_entries);
+  for( int i_entries = 0 /*(d_entryRange*5550)*/; i_entries< N_entries; i_entries++){
+    // get kaon TTree info
+    t_K->GetEntry(i_entries);
     bool    b_pos_charge     = t_K-> GetLeaf("b_pos_charge")->GetValue(0);
     bool    b_bad_TOF        = t_K-> GetLeaf("b_bad_TOF")->GetValue(0);
     int     runNumber        = t_K-> GetLeaf("runNumber")->GetValue(0);
@@ -258,60 +311,42 @@ TString outFile = "test",
     double  z_vtx            = t_K-> GetLeaf("z_vtx")->GetValue(0);
     double  DCA_r            = t_K-> GetLeaf("DCA_r")->GetValue(0);
     double  d_TPCnSigmaKaon  = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-
-    double d_tofBeta         = t_K -> GetLeaf("tofBeta")->GetValue(0);
-    double dEdxFit           = t_K -> GetLeaf("dEdxFit")->GetValue(0);
-    double d_dEdxTru         = t_K -> GetLeaf("d_dEdxTru")->GetValue(0);
-
-    double d_inv_tofBeta     = -9999.0;
-
+    double  d_tofBeta        = t_K -> GetLeaf("tofBeta")->GetValue(0);
+    // double d_dEdx           = t_K -> GetLeaf("dEdx")->GetValue(0);
+    double d_inv_tofBeta     = -999.0;
     double pT  = sqrt(px*px+py*py);
     double mom = sqrt(px*px+py*py+pz*pz);
-    double E   = sqrt((px*px+py*py+pz*pz)+d_K_m*d_K_m);
-    double y   = ((E-pz) != 0.0) ? 0.5*TMath::Log( (E + pz) / (E - pz) ) : -9999;
-    double eta = ((mom - pz) != 0.0) ? 0.5*TMath::Log( (mom + pz) / (mom - pz) ) : -9999.0;
+    double E   = sqrt((px*px+py*py+pz*pz)+_d_K_m*_d_K_m);
+    double y   = ((E-pz) != 0.0) ? 0.5*TMath::Log( (E + pz) / (E - pz) ) : -999.0;
+    double eta = ((mom - pz) != 0.0) ? 0.5*TMath::Log( (mom + pz) / (mom - pz) ) : -999.0;
     double mass2      = mom*mom*((1.0/(d_tofBeta*d_tofBeta))-1.0);
-    // Get useful values
+    double d_q            = 1.;
+    if(!b_pos_charge) d_q = -1.;
+    double d_pq           = fabs(mom) * d_q;
+    if(d_tofBeta != 0.0){
+      d_inv_tofBeta = 1.0 / d_tofBeta;
+      h2_TOF_beta_pq  -> Fill(d_pq,d_inv_tofBeta);
+    }
+    // Get physics values
+    // Fill QA plots
+    // h2_dEdx_pq      -> Fill(d_pq,d_dEdx);
+    // h3_dEdx_pq_vs_nsig      -> Fill(d_pq,d_dEdx,d_TPCnSigmaKaon);
 
-    if(d_tofBeta != 0.0) d_inv_tofBeta = 1.0 / d_tofBeta;
-
+    // push back last event info to event vector when a new event show up
     bool b_new_event = false;
-    if((pre_runNumber != runNumber)||(pre_eventNumber != eventNumber))
-    {
+    if((pre_runNumber != runNumber)||(pre_eventNumber != eventNumber)){
       N_events++;
       b_new_event     = true;
       pre_runNumber   = runNumber;
       pre_eventNumber = eventNumber;
-
-      st_event evt;
+      st_event evt; // an event contains a vector of K+ tracks and K- tracks info
       evt.v_trk_pl = v_trk_pl;
       evt.v_trk_mi = v_trk_mi;
-
       v_evt.push_back(evt);
-      v_trk_pl.clear();
-      v_trk_mi.clear();
+      v_trk_pl.clear(); // reset for tracks of next event
+      v_trk_mi.clear(); // reset for tracks of next event
     }
-    // push back k+ k- tracks info into v_evt
-
-    // PID QA histograms
-    double d_q            = 1.;
-    if(!b_pos_charge) d_q = -1.;
-    double d_p            = sqrt(px*px+py*py+pz*pz);
-    double d_pq           = fabs(d_p) * d_q;
-
-    h2_TOF_beta_pq  -> Fill(d_pq,d_inv_tofBeta);
-    h2_dEdx_pq      -> Fill(d_pq,d_dEdxTru);
-
-    h3_dEdx_pq_vs_nsig      -> Fill(d_pq,d_dEdxTru,d_TPCnSigmaKaon);
-
-    if((fabs(d_TPCnSigmaKaon) < 3.0)
-    && (mass2 > 0.15)
-    && (mass2 < 0.35))
-    {
-      h2_TOF_beta_TPC2sig_TOF_3sig_pq -> Fill(d_pq,d_inv_tofBeta);
-      h2_dEdx_TPC2sig_TOF_3sig_pq     -> Fill(d_pq,d_dEdxTru);
-    }
-
+    // push back K+/- tracks info
     st_track trk;
     trk.b_pos_charge    = b_pos_charge;
     trk.b_bad_TOF       = b_bad_TOF;
@@ -327,588 +362,231 @@ TString outFile = "test",
     trk.DCA_r           = DCA_r;
     trk.d_TPCnSigmaKaon = d_TPCnSigmaKaon;
     trk.tofBeta         = d_tofBeta;
+    // trk.dEdx            = d_dEdx;
+    if(b_pos_charge){
+      v_trk_pl.push_back(trk);
+      hist_KaonPlus_pT->Fill(pT);
+      if(y!=-999.0){
+        hist_KaonPlus_rap->Fill(y);
+        hist_pt_y_kaonPlus->Fill(y,pT)
+      }
+      if(eta!=-999.0){
+        hist_KaonPlus_eta->Fill(eta);
+        hist_pt_eta_kaonPlus->Fill(eta,pT)
+      }
+    }
+    else{
+      v_trk_mi.push_back(trk);
+      hist_KaonMinus_pT->Fill(pT);
+      if(y!=-999.0){
+        hist_KaonMinus_rap->Fill(y);
+        hist_pt_y_kaonMinus->Fill(y,pT)
+      }
+      if(eta!=-999.0){
+        hist_KaonMinus_eta->Fill(eta);
+        hist_pt_eta_kaonMinus->Fill(eta,pT)
+      }
+    } // push back tracks and fill QA hists
+  }
+  cout<<endl<<" LOOPING OVER EVENTS "<< v_evt.size()<<endl<<endl;
+  // ======================= (4) Same Event K+/- pairs loop ====================
+  for(unsigned int i = 0; i < v_evt.size(); i++){
+    st_event         evt      = v_evt[i];
+    vector<st_track> v_trk_pl = v_evt[i].v_trk_pl;
+    vector<st_track> v_trk_mi = v_evt[i].v_trk_mi;
+    // --------------------- (4.1) Positive track loop -------------------------
+    for(unsigned int j = 0; j < v_trk_pl.size(); j++){
+      st_track trk0 = v_trk_pl[j]; // j-th of positive track of i-th event
+      bool    b_pos_charge0    = trk0.b_pos_charge;
+      bool    b_bad_TOF0       = trk0.b_bad_TOF;
+      int     runNumber0       = trk0.runNumber;
+      int     eventNumber0     = trk0.eventNumber;
+      int     nGoodTracks0     = trk0.nGoodTracks;
+      double  px0              = trk0.px;
+      double  py0              = trk0.py;
+      double  pz0              = trk0.pz;
+      double  x_vtx0           = trk0.x_vtx;
+      double  y_vtx0           = trk0.y_vtx;
+      double  z_vtx0           = trk0.z_vtx;
+      double  DCA_r0           = trk0.DCA_r;
+      double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
+      double  d_tofBeta0       = trk0.tofBeta;
+      // double  d_dEdx0          = trk0.dEdx;
+      double d_E0   = sqrt((px0*px0+py0*py0+pz0*pz0)+_d_K_m*_d_K_m);
+      double d_y0   = ((d_E0-pz0) != 0.0) ? 0.5*TMath::Log( (d_E0 + pz0) / (d_E0 - pz0) ) : -999.0;
+      double eta0   = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : -999.0;
+      double d_pT0  = sqrt(px0*px0+py0*py0);
+      double d_mT0  = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
+      double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
+      double mass2_0      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+      // --------------------- (4.2) Negative track loop -----------------------
+      for(unsigned int k = 0; k < v_trk_mi.size(); k++){
+        st_track trk1 = v_trk_mi[k]; // k-th of positive track of i-th event
+        bool    b_pos_charge1    = trk1.b_pos_charge;
+        bool    b_bad_TOF1       = trk1.b_bad_TOF;
+        int     runNumber1       = trk1.runNumber;
+        int     eventNumber1     = trk1.eventNumber;
+        int     nGoodTracks1     = trk1.nGoodTracks;
+        double  px1              = trk1.px;
+        double  py1              = trk1.py;
+        double  pz1              = trk1.pz;
+        double  x_vtx1           = trk1.x_vtx;
+        double  y_vtx1           = trk1.y_vtx;
+        double  z_vtx1           = trk1.z_vtx;
+        double  DCA_r1           = trk1.DCA_r;
+        double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
+        double  d_tofBeta1       = trk1.tofBeta;
+        // double  d_dEdx1          = trk1.dEdx;
+        // K+ Variables
+        double d_M0 = _d_K_m;
+        double d_E0   = sqrt((px0*px0+py0*py0+pz0*pz0)+_d_K_m*_d_K_m);
+        double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
+        double d_y0   = ((d_E0-pz0) != 0.0) ? 0.5*TMath::Log( (d_E0 + pz0) / (d_E0 - pz0) ) : -999.0;
+        double eta0   = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : -999.0;
+        double d_pT0  = sqrt(px0*px0+py0*py0);
+        double d_mT0  = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
+        double mass2_0 = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+        // K- Variables
+        double d_M1 = _d_K_m;
+        double d_E1   = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
+        double d_mom1 = sqrt(px1*px1+py1*py1+pz1*pz1);
+        double d_y1   = ((d_E1-pz1) != 0.0) ? 0.5*TMath::Log( (d_E1 + pz1) / (d_E1 - pz1) ) : -999.0;
+        double eta1   = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
+        double d_pT1  = sqrt(px1*px1+py1*py1);
+        double d_mT1  = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
+        double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
+        // SE cuts
+        if(runNumber0 != runNumber1) continue;
+        if(eventNumber0 != eventNumber1) continue;
+        if(nGoodTracks0 != nGoodTracks1) continue;
+        // phi Variables
+        double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
+        double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
+        double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + _m_phi*_m_phi );
+        double d_phi_pz = pz0+pz1;
+        double d_phi_E  = d_E0+d_E1;
+        double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
+        double d_inv_m  = sqrt(  d_M0*d_M0
+                              + d_M1*d_M1
+                              + 2.0 *d_E0*d_E1
+                              - 2.0 *(px0*px1+py0*py1+pz0*pz1) );
+        h_dip_angle         ->Fill(d_dip_angle);
+        hist_SE_mass_Phi    ->Fill(d_inv_m);
+        hist_SE_PhiMeson_pT ->Fill(d_Phi_pT);
+        hist_SE_PhiMeson_mT ->Fill(d_mT_phi);
+        hist_SE_PhiMeson_rap ->Fill(d_phi_y);
+        hist_SE_pt_y_PhiMeson ->Fill(d_phi_y,d_Phi_pT);
+        // invM cut
+        if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+        // -------------------- (4.2.1) centrality def -------------------------
+        // Same Event nGoodTracks1 == nGoodTracks0
+        Int_t centrality = 0;
+        bool a_b_cent[_Ncentralities]={false};
+        Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
+        bool b_pileup   = (nGoodTracks1 > 245);
+        bool b_low_mult = (nGoodTracks1 < 5);
+        a_b_cent[0]     = (nGoodTracks1 >= cenSection[7] && nGoodTracks1 < cenSection[8]); // 0 - 5%, cent 1
+        a_b_cent[1]     = (nGoodTracks1 >= cenSection[6] && nGoodTracks1 < cenSection[7]); // 5 - 10%, cent 2
+        a_b_cent[2]     = (nGoodTracks1 >= cenSection[5] && nGoodTracks1 < cenSection[6]); // 10 - 20%, cent 3
+        a_b_cent[3]     = (nGoodTracks1 >= cenSection[4]  && nGoodTracks1 < cenSection[5]); // 20 - 30%, cent 4
+        a_b_cent[4]     = (nGoodTracks1 >= cenSection[3]  && nGoodTracks1 < cenSection[4]); // 30 - 40%, cent 5
+        a_b_cent[5]     = (nGoodTracks1 >= cenSection[2]  && nGoodTracks1 < cenSection[3]); // 40 - 50%, cent 6
+        a_b_cent[6]     = (nGoodTracks1 >= cenSection[1]  && nGoodTracks1 < cenSection[2]); // 50 - 60%, cent 7
+        a_b_cent[7]     = (nGoodTracks1 >= cenSection[0]  && nGoodTracks1 < cenSection[1]); // 60 - 70%, cent 8
+        a_b_cent[8]     = (nGoodTracks1 >= 5  && nGoodTracks1 < cenSection[0]); // 70 - 80%, cent 9
+        for(int i=0;i<_Ncentralities;i++){
+          if(a_b_cent[i]) centrality = i+1;
+        }
+        // -------------------- (4.2.2) Fill SE InvM plots -------------------------
+        for(int pt=0; pt<2; pt++)
+        {// pt SetA, cent SetA
+          if(d_Phi_pT >= ptSetA[pt] && d_Phi_pT <= ptSetA[pt+1]){
+            if(centrality >= 1 && centrality <= 2) mHist_SE_InvM_ptSetA_centSetA[pt][0]->Fill(d_inv_m); // 0-10%
+            if(centrality >= 3 && centrality <= 5) mHist_SE_InvM_ptSetA_centSetA[pt][1]->Fill(d_inv_m); // 10-40%
+            if(centrality >= 6 && centrality <= 7) mHist_SE_InvM_ptSetA_centSetA[pt][2]->Fill(d_inv_m); // 40-60%
+            if(centrality >= 6 && centrality <= 9) mHist_SE_InvM_ptSetA_centSetA[pt][3]->Fill(d_inv_m); // 40-80%
+            if(centrality >= 1 && centrality <= 7) mHist_SE_InvM_ptSetA_centSetA[pt][4]->Fill(d_inv_m); // 0-60%
+            if(centrality >= 1 && centrality <= 9) mHist_SE_InvM_ptSetA_centSetA[pt][5]->Fill(d_inv_m); // 0-80%
+          }
+        }
 
-    if(b_pos_charge) v_trk_pl.push_back(trk);
-    else             v_trk_mi.push_back(trk);
-    // push back track vector by trk
-
-    bool b_K_eta   = (eta >= -1.47) && (eta <= 0.0);
-    // if(!b_K_eta)   continue;
-    // We want the psedorapidity region covered by TOF
-
-    // if((y<-2.0)||(y>0.0)) continue;
-    // rapidity cut
-
-    // if(pT > 3.0) continue;
-
-    if((fabs(d_TPCnSigmaKaon) < 3.0)
-    && (mass2 > 0.15)
-    && (mass2 < 0.35))
-    {
-      if(b_pos_charge) h_K_pl_pT -> Fill(pT);
-      else  h_K_min_pT -> Fill(pT);
-
-      if(b_pos_charge) h_K_pl_eta -> Fill(eta);
-      else  h_K_min_eta -> Fill(eta);
+      }
     }
   }
-  // fill track vectors and event vectors, Number of events draw some QA plots
-  ////////////////////////// END Read Kaon Info ////////////////////////////////
 
-    cout<<endl<<"  LOOPING OVER EVENTS "<< v_evt.size()<<endl<<endl;
+  // -------------------------------- Set titles -------------------------------
+  for(int i=0; i<4; i++)
+  {// pt SetB, cent SetA
+    mHist_SE_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
 
-    // //////////////////////// Normal Invariant Mass Event Loop /////////////////////////
-    // for(unsigned int i = 0; i < v_evt.size(); i++)
-    // {
-    //
-    //   st_event         evt      = v_evt[i];
-    //   vector<st_track> v_trk_pl = v_evt[i].v_trk_pl;
-    //   vector<st_track> v_trk_mi = v_evt[i].v_trk_mi;
-    //   ////////////////////// Positive Track Loop ///////////////////////////////
-    //   for(unsigned int j = 0; j < v_trk_pl.size(); j++)
-    //   {
-    //     st_track trk0 = v_trk_pl[j];
-    //
-    //     bool    b_pos_charge0    = trk0.b_pos_charge;
-    //     bool    b_bad_TOF0       = trk0.b_bad_TOF;
-    //     int     runNumber0       = trk0.runNumber;
-    //     int     eventNumber0     = trk0.eventNumber;
-    //     int     nGoodTracks0     = trk0.nGoodTracks;
-    //     double  px0              = trk0.px;
-    //     double  py0              = trk0.py;
-    //     double  pz0              = trk0.pz;
-    //     double  x_vtx0           = trk0.x_vtx;
-    //     double  y_vtx0           = trk0.y_vtx;
-    //     double  z_vtx0           = trk0.z_vtx;
-    //     double  DCA_r0           = trk0.DCA_r;
-    //     double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
-    //     double  d_tofBeta0       = trk0.tofBeta;
-    //
-    //     double E_0   = sqrt((px0*px0+py0*py0+pz0*pz0)+d_K_m*d_K_m);
-    //     double y_0   = ((E_0-pz0) != 0.0) ? 0.5*TMath::Log( (E_0 + pz0) / (E_0 - pz0) ) : -9999;
-    //
-    //     double d_pT0 = sqrt(px0*px0+py0*py0);
-    //     double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
-    //     double eta0 = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
-    //
-    //     double mass2_0      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-    //
-    //     hist_pt_y_kaonPlus->Fill(y_0,d_pT0);
-    //     ////////////////////// Negative Track Loop ///////////////////////////////
-    //     for(unsigned int k = 0; k < v_trk_mi.size(); k++)
-    //     {
-    //       st_track trk1 = v_trk_mi[k];
-    //
-    //       bool    b_pos_charge1    = trk1.b_pos_charge;
-  	//       bool    b_bad_TOF1       = trk1.b_bad_TOF;
-  	//       int     runNumber1       = trk1.runNumber;
-  	//       int     eventNumber1     = trk1.eventNumber;
-  	//       int     nGoodTracks1     = trk1.nGoodTracks;
-  	//       double  px1              = trk1.px;
-  	//       double  py1              = trk1.py;
-  	//       double  pz1              = trk1.pz;
-  	//       double  x_vtx1           = trk1.x_vtx;
-  	//       double  y_vtx1           = trk1.y_vtx;
-  	//       double  z_vtx1           = trk1.z_vtx;
-  	//       double  DCA_r1           = trk1.DCA_r;
-  	//       double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
-    //       double  d_tofBeta1       = trk1.tofBeta;
-    //
-    //       if(b_K_min_check) d_TPCnSigmaKaon1 = 0.0;
-    //       //turn off pid for k minus to get more statistics
-    //
-    //       double d_pT1 = sqrt(px1*px1+py1*py1);
-    //       double d_mom1 = sqrt(px1*px1+py1*py1+pz1*pz1);
-    //       double eta1 = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
-    //
-    //       if(runNumber0 != runNumber1) continue;
-  	//       if(eventNumber0 != eventNumber1) continue;
-    //       //double check events
-    //       bool b_PHI = true;
-    //
-    //       double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
-  	//       h_dip_angle        -> Fill(d_dip_angle);
-    //
-    //       Int_t centrality0 = 0;
-    //       Int_t centrality1 = 0;
-    //
-    //       double d_M1 = d_K_m;
-    //       double d_M0 = d_K_m;
-    //
-    //       double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
-    //       double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
-    //
-    //       double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
-    //       double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
-    //
-    //       double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
-    //       double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
-    //
-    //       hist_pt_y_kaonMinus->Fill(d_y1,d_pT1);
-    //
-    //       Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
-    //       Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
-    //
-    //       Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
-    //       Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
-    //
-    //       // double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
-    //       // double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
-    //
-    //       // efficiency corrections
-    //       // d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
-    //       // d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
-    //
-    //       // Primary normal events
-    //       double d_eff_corr0 = 1.0;
-    //       double d_eff_corr1 = 1.0;
-    //
-    //
-    //       h_eff_corr0->Fill(d_eff_corr0);
-    //       h_eff_corr1->Fill(d_eff_corr1);
-    //
-    //       double d_inv_m = sqrt(  d_M0*d_M0
-    //                             + d_M1*d_M1
-    //                             + 2.0 *d_E0*d_E1
-    //                             - 2.0 *(px0*px1+py0*py1+pz0*pz1) );
-    //
-    //       if(b_PHI) h_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //       // Raw distribution of Phi invariant mass
-    //       double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
-    //       double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
-    //
-    //       int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
-    //       double d_max_multi   = (double) i_max_multi;
-    //
-    //       bool b_pileup0   = (nGoodTracks0 > 270);
-    //       bool b_pileup1   = (nGoodTracks1 > 270);
-    //       bool b_low_mult0 = (nGoodTracks0 <= 10);
-    //       bool b_low_mult1 = (nGoodTracks1 <= 10);
-    //
-    //       if(b_pileup0||b_pileup1) continue;
-    //
-    //       bool a_b_cent0[10];
-    //
-  	//       a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
-  	//       a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
-  	//       a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
-  	//       a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
-    //       a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
-    //       a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
-    //       a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
-    //       a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
-    //       a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
-    //       a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
-    //
-    //       bool a_b_cent1[10];
-    //       a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
-  	//       a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
-  	//       a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
-  	//       a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
-    //       a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
-    //       a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
-    //       a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
-    //       a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
-    //       a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
-    //       a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
-    //
-    //       // 10-70% centrality
-    //       if( nGoodTracks0>=200 || nGoodTracks1>=200||nGoodTracks0<40||nGoodTracks1<40) continue;
-    //
-    //       bool a_b_pT0[12];
-    //       a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
-    //       a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
-    //       a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
-    //       a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
-    //       a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
-    //       a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
-    //       a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
-    //       a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
-    //       a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
-    //       a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
-    //       a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
-    //       a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
-    //
-    //       bool a_b_pT1[12];
-    //       a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
-    //       a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
-    //       a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
-    //       a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
-    //       a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
-    //       a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
-    //       a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
-    //       a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
-    //       a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
-    //       a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
-    //       a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
-    //       a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
-    //
-    //       bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
-  	//       bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
-    //       // eta fiducial cut
-    //
-    //       double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
-    //       bool a_b_Phi_pT[12]={};
-    //       a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
-    //       a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
-    //       a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
-    //       a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
-    //       a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
-    //       a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
-    //       a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
-    //       a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
-    //       a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
-    //       a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
-    //       a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
-    //       a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
-    //
-    //       double m_phi = 1.019455;
-    //       double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
-    //       double d_phi_pz = pz0+pz1;
-  	//       double d_phi_E  = d_E0+d_E1;
-  	//       double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
-    //
-    //       h_phi_TPC2_TOF3_y -> Fill(d_phi_y);
-    //
-    //       // if(d_mT_phi > 2.0) continue;
-    //
-    //       if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-    //
-    //       if(nGoodTracks0 != nGoodTracks1) continue;
-    //
-    //       if(b_K_pl_check) d_max_TPCnsig = d_TPCnSigmaKaon1;
-    //       // Turn off the pid for K minus to get more statistics
-    //
-    //       /* Delete PID in read kaon tree test
-    //       if( (fabs(d_max_TPCnsig) <= 2.0) && (mass2_1 > 0.15) && (mass2_1 < 0.35) && (mass2_0 > 0.15) && (mass2_0 < 0.35) )
-    //          {*/
-    //       if(j==0) h_Kmin_TPC2_TOF3_pT -> Fill( d_pT1);
-    //       if(k==0) h_Kpl_TPC2_TOF3_pT  -> Fill( d_pT0);
-    //       if(b_PHI)
-    //       {
-    //         for(int pt=0; pt<12; pt++)
-    //         {
-    //           if(a_b_Phi_pT[pt]) mHistKKInvMpT[pt]->Fill(d_inv_m);
-    //           h_phi_TPC2_TOF3_pT -> Fill(d_Phi_pT);
-    //           h_phi_TPC2_TOF3_mT -> Fill(d_mT_phi-m_phi);
-    //         }
-    //       }
-    //
-    //         if(b_PHI&&(a_b_cent0[2]||a_b_cent0[1]||a_b_cent0[0])&&(a_b_cent1[2]||a_b_cent1[1]||a_b_cent1[0]))
-    //         {
-    //           if((d_inv_m > 1.00138) && (d_inv_m < 1.03956)) h_phi_TPC2_TOF3_tight_y -> Fill(d_phi_y);
-    //
-    //           h_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //
-    //           if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //           if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-    //
-    //         }
-    //       // }
-    //     }
-    //     ////////////////// End Negative Track Loop ///////////////////////////////
-    //   }
-    //   ////////////////// End Positive Track Loop ///////////////////////////////
-    // }
-    // //////////////////// END Normal Invariant mass Event Loop /////////////////////////
+    mHist_ME_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    // rap SetA, cent SetA
+    mHist_SE_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("SE, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
 
-    int j_start = 0;
-    unsigned long long pre_event_pl_runnumber = 9999;
-    unsigned long long this_mixed_event_pl_runnumber = 9999;
+    mHist_ME_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_rapSetA_centSetA[i][2]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_rapSetA_centSetA[i][3]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_rapSetA_centSetA[i][4]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_rapSetA_centSetA[i][5]->SetTitle(Form("ME, %d<y<%d, %d-%d%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+  }
+  for(int pt=0; pt<2; pt++)
+  {// pt SetA, cent SetA
+    mHist_SE_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("SE, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
 
-    // make a list of events used in mixed events
-    bool b_found_mixed_evt = false;
-    unsigned int i_found_mixed_evt = 0;
+    mHist_ME_InvM_ptSetA_centSetA[pt][0]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][1]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][2]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][3]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][4]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_ptSetA_centSetA[pt][5]->SetTitle(Form("ME, %d<pt<%d, %d-%d%%",ptSetA[pt],ptSetA[pt+1],centSetA[0],centSetA[4]));
+  }
 
-    bool b_half  = false;
-    bool b_quart = false;
-    set<unsigned long long> s_used_mx_events;
-    ////////////////// Mixed Invariant mass Event Loop ///////////////////////
-    for(int i = (d_entryRange*5550); i < N_entries; i++)
-    {
-      // if(i > N_max_events) break;
-      if(( i > ((double) (N_entries-d_entryRange*5550)/4.0))&&(!b_quart)&&(!b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (3.0*(N_entries-d_entryRange*5550))/4.0))&&(!b_quart)&&(b_half)) {cout<<" 0.25 done"<<endl; b_quart = true;}
-      if(( i > ((double) (N_entries-d_entryRange*5550)/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
-      t_K -> GetEntry(i);
-      bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
-      unsigned int i_runNumber0   = t_K -> GetLeaf("runNumber")->GetValue(0);
-      unsigned int i_eventNumber0 = t_K -> GetLeaf("eventNumber")->GetValue(0);
-      unsigned long long event_pl_runnumber0 = (i_runNumber0-19150000)*10000000+i_eventNumber0;
-      if(event_pl_runnumber0 != pre_event_pl_runnumber) {j_start = i; pre_event_pl_runnumber = event_pl_runnumber0; b_found_mixed_evt = false; }
+  hist_SE_mass_Phi->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+  hist_ME_mass_Phi->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+  hist_SE_PhiMeson_pT->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_SE_PhiMeson_mT->GetXaxis()->SetTitle("m_{T} [GeV/c^{2}]");
+  hist_SE_PhiMeson_rap->GetXaxis()->SetTitle("y");
+  hist_PhiMeson_tight_rap->GetXaxis()->SetTitle("y");
+  hist_SE_pt_y_PhiMeson->GetXaxis()->SetTitle("y");
+  hist_SE_pt_y_PhiMeson->GetYaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_dip_angle->GetXaxis()->SetTitle("radian");
+  hist_KaonPlus_pT->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_KaonMinus_pT->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_KaonPlus_rap->GetXaxis()->SetTitle("y");
+  hist_KaonMinus_rap->GetXaxis()->SetTitle("y");
+  hist_KaonPlus_eta->GetXaxis()->SetTitle("#eta");
+  hist_KaonMinus_eta->GetXaxis()->SetTitle("#eta");
+  hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
+  hist_pt_y_kaonPlus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_pt_y_kaonMinus->GetXaxis()->SetTitle("y");
+  hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
+  h2_TOF_beta_pq->GetXaxis()->SetTitle("pq [(GeV/c)C]");
+  h2_TOF_beta_pq->GetYaxis()->SetTitle("1/#beta");
+  h2_dEdx_pq->GetXaxis()->SetTitle("pq [(GeV/c)C]");
+  h2_dEdx_pq->GetYaxis()->SetTitle("dEdx [GeV/cm]");
+  h3_dEdx_pq_vs_nsig->GetXaxis()->SetTitle("pq [(GeV/c)C]");
+  h3_dEdx_pq_vs_nsig->GetYaxis()->SetTitle("dEdx [GeV/cm]");
+  h3_dEdx_pq_vs_nsig->GetZaxis()->SetTitle("|nSigmaKaon|");
 
-      int    nGoodTracks0  = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-
-      double d_xvtx0 = t_K -> GetLeaf("x_vtx")->GetValue(0);
-      double d_yvtx0 = t_K -> GetLeaf("y_vtx")->GetValue(0);
-      double d_zvtx0 = t_K -> GetLeaf("z_vtx")->GetValue(0);
-
-      double px0 = t_K -> GetLeaf("px")->GetValue(0);
-      double py0 = t_K -> GetLeaf("py")->GetValue(0);
-      double pz0 = t_K -> GetLeaf("pz")->GetValue(0);
-
-      double  d_tofBeta0       = t_K -> GetLeaf("tofBeta")->GetValue(0);
-      double  DCA_r0           = t_K-> GetLeaf("DCA_r")->GetValue(0);
-      double  d_TPCnSigmaKaon0 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-
-      double d_pT0    = sqrt(px0*px0+py0*py0);
-      double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
-      double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
-      double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-
-      ///////////////////////// Mixed Track Loop ///////////////////////////////
-      for(int j = j_start; j < N_entries; j++)
-      {
-        t_K -> GetEntry(j);
-        unsigned int i_runNumber1   = t_K -> GetLeaf("runNumber")->GetValue(0);
-        unsigned int i_eventNumber1 = t_K -> GetLeaf("eventNumber")->GetValue(0);
-        unsigned long long event_pl_runnumber1 = (i_runNumber1-19150000)*10000000+i_eventNumber1;
-
-        int     nGoodTracks1     = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-        double d_xvtx1 = t_K -> GetLeaf("x_vtx")->GetValue(0);
-        double d_yvtx1 = t_K -> GetLeaf("y_vtx")->GetValue(0);
-        double d_zvtx1 = t_K -> GetLeaf("z_vtx")->GetValue(0);
-
-
-
-        if(event_pl_runnumber0 == event_pl_runnumber1)
-    	    {
-    	      //cout<<"                            same event continueing"<<endl;
-    	      continue;
-    	    }
-    	  if(b_found_mixed_evt && (event_pl_runnumber1 != this_mixed_event_pl_runnumber) && i_found_mixed_evt == 5 )
-    	    {
-    	      //cout<<" hit next mixed event breaking "<<event_pl_runnumber1 <<endl;
-    	      break;
-    	    }
-    	  if(fabs(d_zvtx1 - d_zvtx0)>0.5)
-    	    {
-    	      // cout<<"                            bad zvtx continuing "<<event_pl_runnumber1<<endl;
-    	      continue;
-    	    }
-
-        if(!b_found_mixed_evt) s_used_mx_events.insert(event_pl_runnumber1);
-        b_found_mixed_evt = true;
-        i_found_mixed_evt++;
-        this_mixed_event_pl_runnumber = event_pl_runnumber1;
-
-        bool b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
-
-        if(b_pos_charge0 == b_pos_charge1) continue;
-
-
-        double px1 = t_K -> GetLeaf("px")->GetValue(0);
-    	  double py1 = t_K -> GetLeaf("py")->GetValue(0);
-    	  double pz1 = t_K -> GetLeaf("pz")->GetValue(0);
-
-        double  DCA_r1           = t_K-> GetLeaf("DCA_r")->GetValue(0);
-        double  d_TPCnSigmaKaon1 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-        double  d_tofBeta1       = t_K -> GetLeaf("tofBeta")->GetValue(0);
-
-        double d_M1 = d_K_m;
-        double d_M0 = d_K_m;
-        double d_E0 = sqrt((px0*px0+py0*py0+pz0*pz0)+d_M0*d_M0);
-        double d_E1 = sqrt((px1*px1+py1*py1+pz1*pz1)+d_M1*d_M1);
-
-        double d_pT1   = sqrt(px1*px1+py1*py1);
-        double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
-        double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
-        double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
-
-        double d_y0 = 0.5*TMath::Log((d_E0 + pz0)/(d_E0 - pz0));
-        double d_y1 = 0.5*TMath::Log((d_E1 + pz1)/(d_E1 - pz1));
-
-        double d_mT0        = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
-        double d_mT1        = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
-
-        double d_inv_m = sqrt( d_M0*d_M0
-                              +d_M1*d_M1
-                              +2.0*d_E0*d_E1
-                              -2.0*(px0*px1+py0*py1+pz0*pz1) );
-
-
-        bool   b_PHI       = true;
-        double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
-
-        Int_t centrality0 = 0;
-        Int_t centrality1 = 0;
-
-        bool b_pileup0   = (nGoodTracks0 > 270);
-        bool b_pileup1   = (nGoodTracks1 > 270);
-        bool b_low_mult0 = (nGoodTracks0 <= 10);
-        bool b_low_mult1 = (nGoodTracks1 <= 10);
-
-        if(b_pileup0||b_pileup1) continue;
-
-        bool a_b_cent0[10];
-
-        a_b_cent0[0] = ( nGoodTracks0 >= 200)   && ( nGoodTracks0 <= 270);
-        a_b_cent0[1] = ( nGoodTracks0 >= 150) && ( nGoodTracks0 < 200);
-        a_b_cent0[2] = ( nGoodTracks0 >= 124)  && ( nGoodTracks0 < 150);
-        a_b_cent0[3] = ( nGoodTracks0 >= 100)   && ( nGoodTracks0 < 124);
-        a_b_cent0[4] = ( nGoodTracks0 >= 72)   && ( nGoodTracks0 < 100);
-        a_b_cent0[5] = ( nGoodTracks0 >= 50) && ( nGoodTracks0 < 72);
-        a_b_cent0[6] = ( nGoodTracks0 >= 40)  && ( nGoodTracks0 < 50);
-        a_b_cent0[7] = ( nGoodTracks0 >= 30)   && ( nGoodTracks0 < 40);
-        a_b_cent0[8] = ( nGoodTracks0 >= 20)  && ( nGoodTracks0 < 30);
-        a_b_cent0[9] = ( nGoodTracks0 >= 10)   && ( nGoodTracks0 < 20);
-
-        bool a_b_cent1[10];
-        a_b_cent1[0] = ( nGoodTracks1 >= 200)   && ( nGoodTracks1 <= 270);
-        a_b_cent1[1] = ( nGoodTracks1 >= 150) && ( nGoodTracks1 < 200);
-        a_b_cent1[2] = ( nGoodTracks1 >= 124)  && ( nGoodTracks1 < 150);
-        a_b_cent1[3] = ( nGoodTracks1 >= 100)   && ( nGoodTracks1 < 124);
-        a_b_cent1[4] = ( nGoodTracks1 >= 72)   && ( nGoodTracks1 < 100);
-        a_b_cent1[5] = ( nGoodTracks1 >= 50) && ( nGoodTracks1 < 72);
-        a_b_cent1[6] = ( nGoodTracks1 >= 40)  && ( nGoodTracks1 < 50);
-        a_b_cent1[7] = ( nGoodTracks1 >= 30)   && ( nGoodTracks1 < 40);
-        a_b_cent1[8] = ( nGoodTracks1 >= 20)  && ( nGoodTracks1 < 30);
-        a_b_cent1[9] = ( nGoodTracks1 >= 10)   && ( nGoodTracks1 < 20);
-
-        // 10-70% centrality
-        if( nGoodTracks0>=200 || nGoodTracks1>=200||nGoodTracks0<40||nGoodTracks1<40) continue;
-
-        bool a_b_pT0[12];
-        a_b_pT0[0]    = (d_pT0 >= 0.0) && (d_pT0 < 0.3);
-        a_b_pT0[1]    = (d_pT0 >= 0.3) && (d_pT0 < 0.6);
-        a_b_pT0[2]    = (d_pT0 >= 0.6) && (d_pT0 < 0.9);
-        a_b_pT0[3]    = (d_pT0 >= 0.9) && (d_pT0 < 1.2);
-        a_b_pT0[4]    = (d_pT0 >= 1.2) && (d_pT0 < 1.5);
-        a_b_pT0[5]    = (d_pT0 >= 1.5) && (d_pT0 < 1.8);
-        a_b_pT0[6]    = (d_pT0 >= 1.8) && (d_pT0 < 2.1);
-        a_b_pT0[7]    = (d_pT0 >= 2.1) && (d_pT0 < 2.4);
-        a_b_pT0[8]    = (d_pT0 >= 2.4) && (d_pT0 < 2.7);
-        a_b_pT0[9]    = (d_pT0 >= 2.7) && (d_pT0 < 3.0);
-        a_b_pT0[10]    = (d_pT0 >= 3.0) && (d_pT0 < 3.3);
-        a_b_pT0[11]    = (d_pT0 >= 3.3) && (d_pT0 < 3.6);
-
-        bool a_b_pT1[12];
-        a_b_pT1[0]    = (d_pT1 >= 0.0) && (d_pT1 < 0.3);
-        a_b_pT1[1]    = (d_pT1 >= 0.3) && (d_pT1 < 0.6);
-        a_b_pT1[2]    = (d_pT1 >= 0.6) && (d_pT1 < 0.9);
-        a_b_pT1[3]    = (d_pT1 >= 0.9) && (d_pT1 < 1.2);
-        a_b_pT1[4]    = (d_pT1 >= 1.2) && (d_pT1 < 1.5);
-        a_b_pT1[5]    = (d_pT1 >= 1.5) && (d_pT1 < 1.8);
-        a_b_pT1[6]    = (d_pT1 >= 1.8) && (d_pT1 < 2.1);
-        a_b_pT1[7]    = (d_pT1 >= 2.1) && (d_pT1 < 2.4);
-        a_b_pT1[8]    = (d_pT1 >= 2.4) && (d_pT1 < 2.7);
-        a_b_pT1[9]    = (d_pT1 >= 2.7) && (d_pT1 < 3.0);
-        a_b_pT1[10]    = (d_pT1 >= 3.0) && (d_pT1 < 3.3);
-        a_b_pT1[11]    = (d_pT1 >= 3.3) && (d_pT1 < 3.6);
-
-
-        double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
-        bool a_b_Phi_pT[12]={};
-        a_b_Phi_pT[0]    = (d_Phi_pT >= 0.0) && (d_Phi_pT < 0.3);
-        a_b_Phi_pT[1]    = (d_Phi_pT >= 0.3) && (d_Phi_pT < 0.6);
-        a_b_Phi_pT[2]    = (d_Phi_pT >= 0.6) && (d_Phi_pT < 0.9);
-        a_b_Phi_pT[3]    = (d_Phi_pT >= 0.9) && (d_Phi_pT < 1.2);
-        a_b_Phi_pT[4]    = (d_Phi_pT >= 1.2) && (d_Phi_pT < 1.5);
-        a_b_Phi_pT[5]    = (d_Phi_pT >= 1.5) && (d_Phi_pT < 1.8);
-        a_b_Phi_pT[6]    = (d_Phi_pT >= 1.8) && (d_Phi_pT < 2.1);
-        a_b_Phi_pT[7]    = (d_Phi_pT >= 2.1) && (d_Phi_pT < 2.4);
-        a_b_Phi_pT[8]    = (d_Phi_pT >= 2.4) && (d_Phi_pT < 2.7);
-        a_b_Phi_pT[9]    = (d_Phi_pT >= 2.7) && (d_Phi_pT < 3.0);
-        a_b_Phi_pT[10]    = (d_Phi_pT >= 3.0) && (d_Phi_pT < 3.3);
-        a_b_Phi_pT[11]    = (d_Phi_pT >= 3.3) && (d_Phi_pT < 3.6);
-
-        Int_t i_ybin0 = h3_KPlusEffTable_input->GetYaxis()->FindBin(d_y0);
-        Int_t i_zbin0 = h3_KPlusEffTable_input->GetZaxis()->FindBin(d_mT0-d_M0);
-
-        Int_t i_ybin1 = h3_KMinusEffTable_input->GetYaxis()->FindBin(d_y1);
-        Int_t i_zbin1 = h3_KMinusEffTable_input->GetZaxis()->FindBin(d_mT1-d_M1);
-
-        double d_eff_corr0 = h3_KPlusEffTable_input ->GetBinContent(centrality0,i_ybin0,i_zbin0);
-        double d_eff_corr1 = h3_KMinusEffTable_input->GetBinContent(centrality1,i_ybin1,i_zbin1);
-
-        // efficiency corrections
-        d_eff_corr0 = (d_eff_corr0 <= 0.01 || d_eff_corr0 >= 1) ? 1 : d_eff_corr0;
-        d_eff_corr1 = (d_eff_corr1 <= 0.01 || d_eff_corr1 >= 1) ? 1 : d_eff_corr1;
-
-        h_eff_corr0->Fill(d_eff_corr0);
-        h_eff_corr1->Fill(d_eff_corr1);
-
-        double d_min_DCA     = (DCA_r0 < DCA_r1) ? DCA_r0 : DCA_r1;
-        double d_max_TPCnsig = (fabs(d_TPCnSigmaKaon0) > fabs(d_TPCnSigmaKaon1)) ? d_TPCnSigmaKaon0 : d_TPCnSigmaKaon1;
-
-        int i_max_multi      = (nGoodTracks0 > nGoodTracks1) ? nGoodTracks0 : nGoodTracks1;
-    	  double d_max_multi   = (double) i_max_multi;
-
-        if(b_PHI) h_mx_prim_inv_m_PHI    -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-
-        // centrality cut
-
-        //eta fiducial cut
-    	  bool b_K0_eta   = (eta0 >= -1.47) && (eta0 <= 0.0);
-    	  bool b_K1_eta   = (eta1 >= -1.47) && (eta1 <= 0.0);
-
-    	  double m_phi = 1.019455;
-    	  double d_mT_phi = sqrt(d_Phi_pT*d_Phi_pT + m_phi*m_phi );
-
-    	  double d_phi_pz = pz0+pz1;
-    	  double d_phi_E  = d_E0+d_E1;
-    	  double d_phi_y  = ((d_phi_E - d_phi_pz) != 0.0) ?  0.5*TMath::Log( (d_phi_E + d_phi_pz) / (d_phi_E - d_phi_pz) ) : -9999;
-
-        // if(d_Phi_pT > 3.0) continue;
-
-        // if((d_phi_y<-2.0)||(d_phi_y>0.0)) continue;
-
-        if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-
-        if(b_K_pl_check)  d_max_TPCnsig = d_TPCnSigmaKaon1;
-
-        if(b_PHI)
-        {
-          for(int pt=0; pt<12; pt++)
-          {
-            if(a_b_Phi_pT[pt]) mHistKKInvMpTMixed[pt]->Fill(d_inv_m);
-          }
-
-          h_mx_TPC2_TOF3_invM -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-2.0 && d_phi_y<-1.5) h_mx_TPC2_TOF3_invM_y_bin1 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-1.5 && d_phi_y<-1.0) h_mx_TPC2_TOF3_invM_y_bin2 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-1.0 && d_phi_y<-0.5) h_mx_TPC2_TOF3_invM_y_bin3 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-          if(d_phi_y>=-0.5 && d_phi_y<=0.0) h_mx_TPC2_TOF3_invM_y_bin4 -> Fill(d_inv_m,1/(d_eff_corr0*d_eff_corr1));
-
-        } //test
-      }
-      ///////////////////// End Mixed Track Loop ///////////////////////////////
-    }
-    //////////// END Mixed Invariant mass Event Loop ///////////////////////
-    // h_mx_prim_inv_m_PHI    -> SaveAs("./result/h_mx_prim_inv_m_PHI_5mx_tot.root");
-
-    // for( int k = 0; k < 8; k++)
-    //   {
-    //     if(k >= 8) break;
-    //     cout<<"saving: "<<k<<endl;
-    //     a_h3_mx_prim_inv_nsig[k] -> SaveAs(Form("h3_mx_prim_inv_nsig_%s.root",TS_ctr[k].Data()));
-    //   }
-
-    h_phi_TPC2_TOF3_tight_y -> SetTitle("#phi Uncorrected dN/dy");
-    h_phi_TPC2_TOF3_tight_y -> SetXTitle("y");
-    h_phi_TPC2_TOF3_tight_y -> SetYTitle("Counts");
-    // h_mx_TPC2_TOF3_invM -> SaveAs("./result/h_mx_TPC2_TOF3_invM_out_5mx_tot.root");//tfile
-    // h_mx_TPC2_TOF3_invM_y_bin1 -> SaveAs("./result/h_mx_TPC2_TOF3_invM_y_bin1_out_5mx_tot.root");
-    // h_mx_TPC2_TOF3_invM_y_bin2 -> SaveAs("./result/h_mx_TPC2_TOF3_invM_y_bin2_out_5mx_tot.root");
-    // h_mx_TPC2_TOF3_invM_y_bin3 -> SaveAs("./result/h_mx_TPC2_TOF3_invM_y_bin3_out_5mx_tot.root");
-    // h_mx_TPC2_TOF3_invM_y_bin4 -> SaveAs("./result/h_mx_TPC2_TOF3_invM_y_bin4_out_5mx_tot.root");
-
-    // new TCanvas();
-    // h_TPC2_TOF3_invM    -> Draw();
-    // h_TPC2_TOF3_invM_y_bin1    -> Draw();
-    // h_TPC2_TOF3_invM_y_bin2    -> Draw();
-    // h_TPC2_TOF3_invM_y_bin3    -> Draw();
-    // h_TPC2_TOF3_invM_y_bin4    -> Draw();
-    //
-    // h_mx_TPC2_TOF3_invM -> SetFillColor(kYellow);
-    // h_mx_TPC2_TOF3_invM_y_bin1 -> SetFillColor(kYellow);
-    // h_mx_TPC2_TOF3_invM_y_bin2 -> SetFillColor(kYellow);
-    // h_mx_TPC2_TOF3_invM_y_bin3 -> SetFillColor(kYellow);
-    // h_mx_TPC2_TOF3_invM_y_bin4 -> SetFillColor(kYellow);
-
-    tf_out->Write();
-    return;
 }
-/////////////////////////// END Main Function //////////////////////////////////
