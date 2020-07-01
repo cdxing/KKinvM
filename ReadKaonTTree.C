@@ -511,19 +511,19 @@ void ReadKaonTTree( string FileName,
   // -------------------------------- Set titles -------------------------------
   for(int i=0; i<4; i++)
   {// pt SetB, cent SetA
-    mHist_SE_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_SE_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_SE_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_SE_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_SE_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_SE_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_SE_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[1]));
+    mHist_SE_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[1],centSetA[2]));
+    mHist_SE_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[2],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[2],centSetA[4]));
+    mHist_SE_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[3]));
+    mHist_SE_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[4]));
 
-    mHist_ME_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
-    mHist_ME_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
-    mHist_ME_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[3]));
-    mHist_ME_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[2],centSetA[4]));
-    mHist_ME_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[3]));
-    mHist_ME_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[4]));
+    mHist_ME_InvM_ptSetB_centSetA[i][0]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[1]));
+    mHist_ME_InvM_ptSetB_centSetA[i][1]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[1],centSetA[2]));
+    mHist_ME_InvM_ptSetB_centSetA[i][2]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[2],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][3]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[2],centSetA[4]));
+    mHist_ME_InvM_ptSetB_centSetA[i][4]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[3]));
+    mHist_ME_InvM_ptSetB_centSetA[i][5]->SetTitle(Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[i],ptSetB[i+1],centSetA[0],centSetA[4]));
     // rap SetA, cent SetA
     mHist_SE_InvM_rapSetA_centSetA[i][0]->SetTitle(Form("SE, %3.1f<y<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[0],centSetA[1]));
     mHist_SE_InvM_rapSetA_centSetA[i][1]->SetTitle(Form("SE, %3.1f<y<%3.1f, %3.f-%3.f%%",rapSetA[i],rapSetA[i+1],centSetA[1],centSetA[2]));
