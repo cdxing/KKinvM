@@ -533,7 +533,7 @@ void ReadKaonTTree( string FileName,
           }
           for(int cent=0; cent<9;cent++){
             if(d_phi_y >= rapSetA[i] && d_phi_y <= rapSetA[i+1]){
-              if(centrality == cent+1 ) mHist_SE_InvM_rapSetA_centSetB[rap][cent]->Fill(d_inv_m);
+              if(centrality == cent+1 ) mHist_SE_InvM_rapSetA_centSetB[i][cent]->Fill(d_inv_m);
             }
           }
         }
@@ -553,7 +553,7 @@ void ReadKaonTTree( string FileName,
             }
           }
         }
-        
+
       }
     }
   }
