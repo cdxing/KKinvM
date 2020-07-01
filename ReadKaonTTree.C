@@ -230,11 +230,11 @@ void ReadKaonTTree( string FileName,
   {
     for(int cent=0; cent<9;cent++){
       mHist_SE_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_SE_InvM_ptSetB%d_centSetB%d",pt,cent),
-      Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("SE, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[pt],ptSetB[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_SE_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
       mHist_ME_InvM_ptSetB_centSetB[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetB%d_centSetB%d",pt,cent),
-      Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",rapSetA[pt],rapSetA[pt+1],centSetB[cent],centSetB[cent+1]),
+      Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetB[pt],ptSetB[pt+1],centSetB[cent],centSetB[cent+1]),
       200,0.9,1.1);
       mHist_ME_InvM_ptSetB_centSetB[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
