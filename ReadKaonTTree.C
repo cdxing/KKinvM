@@ -85,7 +85,7 @@ struct st_track // Useful Physics information of a track (from kaon TTree)
   // double  dEdx;
   double  DCA_r;
   double  d_TPCnSigmaKaon;
-  double  d_TOFnSigmaKaon
+  double  d_TOFnSigmaKaon;
 };
 struct st_event // Positive and negative tracks of an event
 {
@@ -141,6 +141,7 @@ void ReadKaonTTree( string FileName,
   // ---------------------------- Output file and Hists ------------------------
   outFile.Append(".readKTree.result.root");
   TFile * tf_out = new TFile(outFile,"RECREATE");
+  TH1D * h_dip_angle = new TH1D("h_dip_angle","h_dip_angle",1000,-1,1.0);
   TH1D * hist_SE_mass_Phi     = new TH1D("hist_SE_mass_Phi","Same event invariant mass",200,0.9,1.1);
   TH1D * hist_ME_mass_Phi     = new TH1D("hist_ME_mass_Phi","Mixed event invariant mass",200,0.9,1.1);
   // ------------------------------- QA plots ----------------------------------
@@ -166,7 +167,7 @@ void ReadKaonTTree( string FileName,
   TH2D *hist_pt_eta_kaonMinus = new TH2D("hist_pt_eta_kaonMinus","p_{T} [GeV/c] vs. #eta of K^{-}",500,-3.0,0.5,500,0.0,3.5);
   // ----- InvMass plots in different centrality and pT or y bins --------------
   double ptSetA[3]  = {0.4, 1.2, 2.0};
-  double rapSetA[5]  = {0.4, 0.7, 1.0, 1.4, 2.0};
+  double ptSetB[5]  = {0.4, 0.7, 1.0, 1.4, 2.0};
   double ptSetC[11] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0};
 
   double rapSetA[5]  = {-2.0, -1.5, -1.0, -0.5, 0};
@@ -368,11 +369,11 @@ void ReadKaonTTree( string FileName,
       hist_KaonPlus_pT->Fill(pT);
       if(y!=-999.0){
         hist_KaonPlus_rap->Fill(y);
-        hist_pt_y_kaonPlus->Fill(y,pT)
+        hist_pt_y_kaonPlus->Fill(y,pT);
       }
       if(eta!=-999.0){
         hist_KaonPlus_eta->Fill(eta);
-        hist_pt_eta_kaonPlus->Fill(eta,pT)
+        hist_pt_eta_kaonPlus->Fill(eta,pT);
       }
     }
     else{
@@ -380,11 +381,11 @@ void ReadKaonTTree( string FileName,
       hist_KaonMinus_pT->Fill(pT);
       if(y!=-999.0){
         hist_KaonMinus_rap->Fill(y);
-        hist_pt_y_kaonMinus->Fill(y,pT)
+        hist_pt_y_kaonMinus->Fill(y,pT);
       }
       if(eta!=-999.0){
         hist_KaonMinus_eta->Fill(eta);
-        hist_pt_eta_kaonMinus->Fill(eta,pT)
+        hist_pt_eta_kaonMinus->Fill(eta,pT);
       }
     } // push back tracks and fill QA hists
   }
@@ -412,13 +413,6 @@ void ReadKaonTTree( string FileName,
       double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
       double  d_tofBeta0       = trk0.tofBeta;
       // double  d_dEdx0          = trk0.dEdx;
-      double d_E0   = sqrt((px0*px0+py0*py0+pz0*pz0)+_d_K_m*_d_K_m);
-      double d_y0   = ((d_E0-pz0) != 0.0) ? 0.5*TMath::Log( (d_E0 + pz0) / (d_E0 - pz0) ) : -999.0;
-      double eta0   = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : -999.0;
-      double d_pT0  = sqrt(px0*px0+py0*py0);
-      double d_mT0  = sqrt(d_pT0*d_pT0 + d_M0*d_M0);
-      double d_mom0 = sqrt(px0*px0+py0*py0+pz0*pz0);
-      double mass2_0      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
       // --------------------- (4.2) Negative track loop -----------------------
       for(unsigned int k = 0; k < v_trk_mi.size(); k++){
         st_track trk1 = v_trk_mi[k]; // k-th of positive track of i-th event
