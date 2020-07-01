@@ -141,7 +141,7 @@ void ReadKaonTTree( string FileName,
   // ---------------------------- Output file and Hists ------------------------
   outFile.Append(".readKTree.result.root");
   TFile * tf_out = new TFile(outFile,"RECREATE");
-  TH1D * h_dip_angle = new TH1D("h_dip_angle","h_dip_angle",1000,-1,1.0);
+  TH1D * hist_dip_angle = new TH1D("hist_dip_angle","hist_dip_angle",1000,-1,1.0);
   TH1D * hist_SE_mass_Phi     = new TH1D("hist_SE_mass_Phi","Same event invariant mass",200,0.9,1.1);
   TH1D * hist_ME_mass_Phi     = new TH1D("hist_ME_mass_Phi","Mixed event invariant mass",200,0.9,1.1);
   // ------------------------------- QA plots ----------------------------------
@@ -154,7 +154,6 @@ void ReadKaonTTree( string FileName,
   TH2D * h2_dEdx_pq                      = new TH2D("h2_dEdx_pq","dEdx vs. pq",500,-3,3,500,2e-6,10e-6);
   TH3D * h3_dEdx_pq_vs_nsig              = new TH3D("h3_dEdx_pq_vs_nsig","nSigmaKaon vs. dEdx vs. pq",500,-3,3,500,2e-6,10e-6,100,0.0,10.0);
   // waiting for dedx value in the K TTree for plots that need dedx info
-  TH1D *hist_dip_angle       = new TH1D("hist_dip_angle","hist_dip_angle",1000,-1,1.0);
   TH1D *hist_KaonPlus_pT  = new TH1D("hist_KaonPlus_pT","pT distribution of K^{+}",500,0.0,3.5);
   TH1D *hist_KaonMinus_pT = new TH1D("hist_KaonMinus_pT","pT distribution of K^{-}",500,0.0,3.5);
   TH1D *hist_KaonPlus_rap  = new TH1D("hist_KaonPlus_rap","y distribution of K^{+}",500,-3.0,0.5);
@@ -464,7 +463,7 @@ void ReadKaonTTree( string FileName,
                               + d_M1*d_M1
                               + 2.0 *d_E0*d_E1
                               - 2.0 *(px0*px1+py0*py1+pz0*pz1) );
-        h_dip_angle         ->Fill(d_dip_angle);
+        hist_dip_angle         ->Fill(d_dip_angle);
         hist_SE_mass_Phi    ->Fill(d_inv_m);
         hist_SE_PhiMeson_pT ->Fill(d_Phi_pT);
         hist_SE_PhiMeson_mT ->Fill(d_mT_phi);
@@ -472,6 +471,7 @@ void ReadKaonTTree( string FileName,
         hist_SE_pt_y_PhiMeson ->Fill(d_phi_y,d_Phi_pT);
         // invM cut
         if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+        if(d_dip_angle<0.04) continue; // dip-angle cut
         // -------------------- (4.2.1) centrality def -------------------------
         // Same Event nGoodTracks1 == nGoodTracks0
         Int_t centrality = 0;
