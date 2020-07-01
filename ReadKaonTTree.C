@@ -252,7 +252,7 @@ void ReadKaonTTree( string FileName,
       mHist_ME_InvM_ptSetC_centAll[pt][cent] = new TH1D(Form("Hist_ME_InvM_ptSetC%d_centAll%d",pt,cent),
       Form("ME, %3.1f<pt<%3.1f, %3.f-%3.f%%",ptSetC[pt],ptSetC[pt+1],centSetA[0],centSetA[cent+3]),
       200,0.9,1.1);
-      mHist_SE_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
+      mHist_ME_InvM_ptSetC_centAll[pt][cent]->GetXaxis()->SetTitle("mass [GeV/c^{2}]");
     }
   }
   // rap SetA, cent SetA
@@ -503,7 +503,52 @@ void ReadKaonTTree( string FileName,
             if(centrality >= 1 && centrality <= 9) mHist_SE_InvM_ptSetA_centSetA[pt][5]->Fill(d_inv_m); // 0-80%
           }
         }
+        for(int pt=0; pt<2; pt++)
+        {// pt SetA, cent SetB
+          for(int cent=0; cent<9;cent++){
+            if(d_Phi_pT >= ptSetA[pt] && d_Phi_pT <= ptSetA[pt+1]){
+              if(centrality == cent+1 ) mHist_SE_InvM_ptSetA_centSetB[pt][cent]->Fill(d_inv_m);
+            }
+          }
+        }
+        for(int i=0; i<4; i++)
+        {// pt SetB, cent SetA
+          if(d_Phi_pT >= ptSetB[i] && d_Phi_pT <= ptSetB[i+1]){
+            if(centrality >= 1 && centrality <= 2) mHist_SE_InvM_ptSetB_centSetA[i][0]->Fill(d_inv_m); // 0-10%
+            if(centrality >= 3 && centrality <= 5) mHist_SE_InvM_ptSetB_centSetA[i][1]->Fill(d_inv_m); // 10-40%
+            if(centrality >= 6 && centrality <= 7) mHist_SE_InvM_ptSetB_centSetA[i][2]->Fill(d_inv_m); // 40-60%
+            if(centrality >= 6 && centrality <= 9) mHist_SE_InvM_ptSetB_centSetA[i][3]->Fill(d_inv_m); // 40-80%
+            if(centrality >= 1 && centrality <= 7) mHist_SE_InvM_ptSetB_centSetA[i][4]->Fill(d_inv_m); // 0-60%
+            if(centrality >= 1 && centrality <= 9) mHist_SE_InvM_ptSetB_centSetA[i][5]->Fill(d_inv_m); // 0-80%
+          }
 
+          // rap SetA, cent SetA
+          if(d_phi_y >= rapSetA[i] && d_phi_y <= rapSetA[i+1]){
+            if(centrality >= 1 && centrality <= 2) mHist_SE_InvM_rapSetA_centSetA[i][0]->Fill(d_inv_m); // 0-10%
+            if(centrality >= 3 && centrality <= 5) mHist_SE_InvM_rapSetA_centSetA[i][1]->Fill(d_inv_m); // 10-40%
+            if(centrality >= 6 && centrality <= 7) mHist_SE_InvM_rapSetA_centSetA[i][2]->Fill(d_inv_m); // 40-60%
+            if(centrality >= 6 && centrality <= 9) mHist_SE_InvM_rapSetA_centSetA[i][3]->Fill(d_inv_m); // 40-80%
+            if(centrality >= 1 && centrality <= 7) mHist_SE_InvM_rapSetA_centSetA[i][4]->Fill(d_inv_m); // 0-60%
+            if(centrality >= 1 && centrality <= 9) mHist_SE_InvM_rapSetA_centSetA[i][5]->Fill(d_inv_m); // 0-80%
+          }
+        }
+        for(int pt=0; pt<4; pt++)
+        {// pt SetB, cent SetB
+          for(int cent=0; cent<9;cent++){
+            if(d_Phi_pT >= ptSetB[pt] && d_Phi_pT <= ptSetB[pt+1]){
+              if(centrality == cent+1 ) mHist_SE_InvM_ptSetB_centSetB[pt][cent]->Fill(d_inv_m);
+            }
+          }
+        }
+        for(int pt=0; pt<10; pt++)
+        {// pt SetC, cent 0-60%, 0-80%
+          for(int cent=0; cent<2;cent++){
+            if(d_Phi_pT >= ptSetC[pt] && d_Phi_pT <= ptSetC[pt+1]){
+              if(centrality >= 1 && centrality <= cent*2 + 7 ) mHist_SE_InvM_ptSetC_centAll[pt][cent]->Fill(d_inv_m);
+            }
+          }
+        }
+        
       }
     }
   }
