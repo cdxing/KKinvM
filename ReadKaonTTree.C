@@ -582,5 +582,5 @@ void ReadKaonTTree( string FileName,
   h3_dEdx_pq_vs_nsig->GetXaxis()->SetTitle("pq [(GeV/c)C]");
   h3_dEdx_pq_vs_nsig->GetYaxis()->SetTitle("dEdx [GeV/cm]");
   h3_dEdx_pq_vs_nsig->GetZaxis()->SetTitle("|nSigmaKaon|");
-
+  tf_out->Write();
 }
