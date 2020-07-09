@@ -165,7 +165,7 @@ void ReadKaonTTree( string FileName,
   TH2D *hist_pt_eta_kaonPlus = new TH2D("hist_pt_eta_kaonPlus","p_{T} [GeV/c] vs. #eta of K^{+}",500,-3.0,0.5,500,0.0,3.5);
   TH2D *hist_pt_eta_kaonMinus = new TH2D("hist_pt_eta_kaonMinus","p_{T} [GeV/c] vs. #eta of K^{-}",500,-3.0,0.5,500,0.0,3.5);
   // ----- InvMass plots in different centrality and pT or y bins --------------
-  double ptSetA[3]  = {0.4, 1.2, 2.0};
+  double ptSetA[3]  = {0.6, 1.2, 2.4};
   double ptSetB[5]  = {0.4, 0.7, 1.0, 1.4, 2.0};
   double ptSetC[11] = {0.2, 0.4, 0.6, 0.8, 1.0, 1.3, 1.6, 2.0, 2.5, 3.0, 4.0};
 
@@ -530,6 +530,7 @@ void ReadKaonTTree( string FileName,
             if(centrality >= 1 && centrality <= 7) mHist_SE_InvM_rapSetA_centSetA[i][4]->Fill(d_inv_m); // 0-60%
             if(centrality >= 1 && centrality <= 9) mHist_SE_InvM_rapSetA_centSetA[i][5]->Fill(d_inv_m); // 0-80%
           }
+          // rap SetA, cent SetB
           for(int cent=0; cent<9;cent++){
             if(d_phi_y >= rapSetA[i] && d_phi_y <= rapSetA[i+1]){
               if(centrality == cent+1 ) mHist_SE_InvM_rapSetA_centSetB[i][cent]->Fill(d_inv_m);
