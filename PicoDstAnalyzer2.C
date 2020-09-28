@@ -223,7 +223,7 @@ void PicoDstAnalyzer2(
     hist_Vz_pri->Fill(d_zvtx);
     hist_VyVx_pri->Fill(d_xvtx,d_yvtx);
     hist_Vr_pri->Fill(primaryVertex_perp);
-    hist_DCA  ->Fill(picoTrack->gDCA(d_xvtx,d_yvtx,d_zvtx));
+    // hist_DCA  ->Fill(picoTrack->gDCA(d_xvtx,d_yvtx,d_zvtx));
     bool b_bad_zvtx   =  ((d_zvtx < 197.6) || (d_zvtx > 202.4)); //FXT_26p5_2018 // loose systematic cut
     bool b_bad_xvtx   =  ((d_xvtx < -1.0) || (d_xvtx > 1.0)); //FXT_26p5_2018
     bool b_bad_yvtx   =  ((d_yvtx < -3.0) || (d_yvtx > -0.5)); //FXT_26p5_2018
@@ -261,19 +261,19 @@ void PicoDstAnalyzer2(
       nGoodTracks++; // nGoodTracks is used to determine centrality later in the event loop
       vGoodTracks.push_back(picoTrack);
       if(d_tofBeta == -999) continue;
-      h2_m2_QA_pq   ->Fill(d_mom0/(picoTrack->charge()),mass2);
-      h2_m2_QA_pT   ->Fill(d_pT0/(picoTrack->charge()),mass2);
+      h2_m2_QA_pq   ->Fill(d_mom/(picoTrack->charge()),mass2);
+      h2_m2_QA_pT   ->Fill(d_pT/(picoTrack->charge()),mass2);
     }
     h_mult->Fill(nFXTMult); // use the # of primary tracks to define centrality
     // ====== (4) Track Loop to Get Kaon tracks and build Kaon TTree ===========
     vector<StPicoTrack *> v_pri_tracks;
     vector<StPicoTrack *> v_pri_tracks_pl;
     vector<StPicoTrack *> v_pri_tracks_mi;
-    for(unsigned int iTrk=0; i<vGoodTracks.size();i++){
+    for(unsigned int iTrk=0; iTrk<vGoodTracks.size();iTrk++){
       StPicoTrack* picoTrack = vGoodTracks[iTrk];
       StPicoBTofPidTraits *trait        = NULL;
       Short_t trk_charge;
-      Double_t d_pt,d_px,d_py,d_pz,d_ptot;
+      Double_t d_pt,d_px,d_py,d_pz,d_pT,d_ptot;
       Double_t mass2 =-999.0,d_tofBeta =-999.0;
       Double_t energyProton,energyKaon,energyPion,rapProton,rapKaon,rapPion,mtProton,mtKaon,mtPion;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
@@ -285,7 +285,7 @@ void PicoDstAnalyzer2(
       d_pT     = picoTrack->pPt();
       d_ptot   = sqrt(d_pT*d_pT + d_pz*d_pz);
 
-      if(tofBeta != -999.0) mass2 = ptot * ptot *( ( 1.0 / ( tofBeta*tofBeta ) ) - 1.0 );
+      if(d_tofBeta != -999.0) mass2 = d_ptot * d_ptot *( ( 1.0 / ( d_tofBeta*d_tofBeta ) ) - 1.0 );
       Int_t particleType = -999; //default -999. 0,1,2,3,4 indicate p, K+, K-, \Pi+, \Pi-
       energyProton = TMath::Sqrt(d_ptot*d_ptot + _massProton*_massProton);
       energyKaon = TMath::Sqrt(d_ptot*d_ptot + _massKaon*_massKaon);
