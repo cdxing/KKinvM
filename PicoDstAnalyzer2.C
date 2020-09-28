@@ -246,7 +246,7 @@ void PicoDstAnalyzer2(
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
       if(trait){
         tofBeta   = trait->btofBeta();
-        b_bad_ToF = (trait->btof() <= 0.0);
+        // b_bad_ToF = (trait->btof() <= 0.0);
       }
       double d_px  = picoTrack->pMom().x();
       double d_py  = picoTrack->pMom().y();
@@ -282,7 +282,11 @@ void PicoDstAnalyzer2(
       Double_t mass2 =-999.0,tofBeta =-999.0;
       Double_t energyProton,energyKaon,energyPion,rapProton,rapKaon,rapPion,mtProton,mtKaon,mtPion;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
-      if(trait) tofBeta    = trait->btofBeta();
+      bool b_bad_ToF       = false;
+      if(trait){
+        tofBeta   = trait->btofBeta();
+        b_bad_ToF = (trait->btof() <= 0.0);
+      }
       charge = picoTrack->charge();
       d_px     = picoTrack->pMom().x();
       d_py     = picoTrack->pMom().y();
