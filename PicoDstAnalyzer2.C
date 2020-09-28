@@ -176,6 +176,8 @@ void PicoDstAnalyzer2(
   TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
   TH2D *hist_pt_y_kaonMinus = new TH2D("hist_pt_y_kaonMinus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
   TH1D *h_evt       = new TH1D("h_evt","# of events",1,0,1);
+  TH2D *h2_dEdxVsPq = new TH2D("h2_dEdxVsPq","dE/dx vs q*|p|",500,-3.0,3.0,500,0.0,10.0);
+  TH2D *h2_dEdxVspTq = new TH2D("h2_dEdxVspTq","dE/dx vs q*|p|",500,-3.0,3.0,500,0.0,10.0);
   TH1D *hist_Vz_pri = new TH1D("hist_Vz_pri","V_{Z} [cm]",6000,-300.0,300.0);
   TH2D *hist_VyVx_pri = new TH2D("hist_VyVx_pri","V_{Y} [cm] vs. V_{X} [cm]",500,-5.0,5.0,500,-5.0,5.0);
   TH1D *hist_Vr_pri = new TH1D("hist_Vr_pri","V_{R} [cm]",500,0.0,20.0);
@@ -296,8 +298,8 @@ void PicoDstAnalyzer2(
       mtProton   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
       mtKaon   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
       mtPion   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
-      h2_dEdxVsPq->Fill(charge*ptot,picoTrack->dEdx());
-      h2_dEdxVspTq->Fill(charge*pt,picoTrack->dEdx());
+      h2_dEdxVsPq->Fill(trk_charge*d_ptot,picoTrack->dEdx());
+      h2_dEdxVspTq->Fill(trk_charge*d_pT,picoTrack->dEdx());
       double d_TPCnSigmaElectron = fabs(picoTrack->nSigmaElectron());
       double d_TPCnSigmaPion   = fabs(picoTrack->nSigmaPion());
       double d_TPCnSigmaProton = fabs(picoTrack->nSigmaProton());
