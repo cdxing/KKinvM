@@ -22,6 +22,11 @@
  *
  * \author Ding Chen
  * \date Feb 22, 2020
+ * \Update to analyze Run18 3p85 GeV 26.5GeV FXT analysis
+ *
+ * \author Ding Chen
+ * \date Jul 8, 2020
+ * \Update to do Min-bias study
  */
 
 // C++ headers
@@ -58,712 +63,435 @@
 #include "StPicoEvent/StPicoBTofPidTraits.h"
 #include "StPicoEvent/StPicoTrackCovMatrix.h"
 
-
+// ----------- Class st_k to store useful Kaon track information ---------------
 class st_K : public TObject
 {
 public:
-    st_K(){ reset(); }
-    virtual ~st_K(){}
-    bool b_pos_charge;
-    bool b_bad_TOF;
+  st_K(){ reset(); }
+  virtual ~st_K(){}
 
-    unsigned int runNumber;
-    unsigned int eventNumber;
-    unsigned int nGoodTracks;
-    unsigned int nTrkvsCuts;
+  bool b_pos_charge;
+  bool b_bad_TOF;
 
-    float px;
-    float py;
-    float pz;
+  unsigned int runNumber;
+  unsigned int eventNumber;
+  unsigned int nGoodTracks;
+  unsigned int nFXTMult;
 
-    float x_vtx;
-    float y_vtx;
-    float z_vtx;
+  float px;
+  float py;
+  float pz;
 
-    float tofBeta;
-    float dEdxFit;
-    float d_dEdxTru;
-    float DCA_r;
+  float x_vtx;
+  float y_vtx;
+  float z_vtx;
+  float r_vtx;
+  float DCA_r;
 
-    float d_TPCnSigmaKaon;
-    float d_TOFnSigmaKaon;
+  float tofBeta;
+  float mass2;
 
-    void reset()
-    {
-      b_pos_charge = 0;
-      b_bad_TOF = 0;
+  float nHitsDedx;
+  float nHitsFit;
+  float nHitsRatio;
 
-      runNumber   = 0;
-      eventNumber = 0;
-      nGoodTracks = 0;
-      nTrkvsCuts  = 0;
+  float d_TPCnSigmaKaon;
+  float d_TOFnSigmaKaon;
 
-      px = 0.0;
-      py = 0.0;
-      pz = 0.0;
+  void reset()
+  {
+    b_pos_charge = 0;
+    b_bad_TOF = 0;
 
-      x_vtx = 0.0;
-      y_vtx = 0.0;
-      z_vtx = 0.0;
+    runNumber   = 0;
+    eventNumber = 0;
+    nGoodTracks = 0;
+    nFXTMult  = 0;
 
-      d_TPCnSigmaKaon = 0.0;
-      d_TOFnSigmaKaon = 0.0;
+    px = 0.0;
+    py = 0.0;
+    pz = 0.0;
 
-      DCA_r = -9999.0;
-    }
+    x_vtx = -9999.0;
+    y_vtx = -9999.0;
+    z_vtx = -9999.0;
+    r_vtx = -9999.0;
+    DCA_r = -9999.0;
+
+    tofBeta = -999.0;
+    mass2 = -9999.0;
+
+    nHitsDedx = -9999.0;
+    nHitsFit = -9999.0;
+    nHitsRatio = -9999.0;
+
+    d_TPCnSigmaKaon = -9999.0;
+    d_TOFnSigmaKaon = -9999.0;
+  }
 
 private:
-    ClassDef(st_K,1);
+  ClassDef(st_K,1);
 };
 
-//=============================== Main Function ==============================================
-void PicoDstAnalyzer2(const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
-                      TString outFile = "test")
-{
-  std::cout << "Hi! Lets do some physics, Master!" << std::endl;
-
+const Double_t _massPion     = 0.13957039;
+const Double_t _massKaon     = 0.493677;
+const Double_t _massProton   = 0.938272081;
+// ===================== (1) Main Function to build Kaon Tree ==================
+void PicoDstAnalyzer2(
+  const Char_t *inFile = "../files/PicoDst/st_physics_16140033_raw_0000002.picoDst.root",
+  TString outFile = "test"
+){// -------------------- Read information from PicoDst ------------------------
+  std::cout << "Hi! Lets do some physics, my Lord!" << std::endl;
   StPicoDstReader* picoReader = new StPicoDstReader(inFile);
   picoReader->Init();
-
   std::cout << "Explicit read status for some branches" << std::endl;
   picoReader->SetStatus("*",0);
   picoReader->SetStatus("Event",1);
   picoReader->SetStatus("Track",1);
   picoReader->SetStatus("BTofHit",1);
   picoReader->SetStatus("BTofPidTraits",1);
-
   std::cout << "Status has been set" << std::endl;
-
-  std::cout << "Now I know what to read, Master!" << std::endl;
-
-  if( !picoReader->chain() ) {
-      std::cout << "No chain has been found." << std::endl;
+  std::cout << "Now I know what to read, my Lord!" << std::endl;
+  if( !picoReader->chain() ){
+    std::cout << "No chain has been found." << std::endl;
   }
-
   Long64_t eventsInTree = picoReader->tree()->GetEntries();
   std::cout << "eventsInTree: "  << eventsInTree << std::endl;
-
   Long64_t events2read = picoReader->chain()->GetEntries();
   std::cout << "Number of events to read: " << events2read << std::endl;
-
   outFile.Append(".picoDst.result.root");
-
   TFile *outputFile = new TFile(outFile,"recreate");
+  // ------------------- variables and histograms ------------------------------
+  Double_t  d_zvtx  = -9999.0;
+  Double_t  d_xvtx  = -9999.0;
+  Double_t  d_yvtx  = -9999.0;
 
-  // Histogramning
-  double  d_zvtx  = -9999.0;
-  double  d_xvtx  = -9999.0;
-  double  d_yvtx  = -9999.0;
-
-  unsigned int  i_event = 0;
-
-  unsigned int  runNumber        = 0;
-  unsigned int  eventNumber      = 0;
-
+  unsigned int  i_event     = 0;
+  unsigned int  runNumber   = 0;
+  unsigned int  eventNumber = 0;
   std::vector <unsigned int> triggerIDs;
-
   st_K Kaoninfo;
-  // st_track trackinfo;
-
-  TTree *  t_K        = new TTree("t_K","t_K");
-  t_K         -> Branch("Kaoninfo",&Kaoninfo);
-
-  double d_PI_m2   = 0.019479955;
-  double d_K_m2    = 0.24371698;
-  double d_PRO_m2  = 0.8803545;
-
+  TTree *t_K = new TTree("t_K","t_K");
+  t_K->Branch("Kaoninfo",&Kaoninfo);
   TH2D *hist_pt_y_kaonPlus = new TH2D("hist_pt_y_kaonPlus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonPlus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
   TH2D *hist_pt_y_kaonMinus = new TH2D("hist_pt_y_kaonMinus","p_{T} [GeV/c] vs. y",500,-3.0,0.5,500,0.0,3.5);
-  hist_pt_y_kaonMinus->GetXaxis()->SetTitle("y");
-  hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
-
-  TH1D *  h_evt       = new TH1D("h_evt","h_evt",1,0,1);
-  TH1D *  h_zvtx      = new TH1D("h_zvtx","h_zvtx",100,200,220);
-  TH1D *  h_pT       = new TH1D("h_pT","h_pT",64,0.0,32.0);
-  TH2D *  h2_dEdx_PI_pq = new TH2D("h2_dEdx_PI_pq","h2_dEdx_PI_pq",500,-2.0,2.0,500,0.6,3);
-  TH2D *  h2_dEdx_PRO_pq = new TH2D("h2_dEdx_PRO_pq","h2_dEdx_PRO_pq",500,-2.0,2.0,500,0.6,3);
-  TH2D *  h2_dEdx_K_pq = new TH2D("h2_dEdx_K_pq","h2_dEdx_K_pq",500,-2.0,2.0,500,0.6,3);
-
-  TH2D *  h2_dEdx_All_pq = new TH2D("h2_dEdx_All_pq","h2_dEdx_All_pq",500,-2.0,2.0,2000,0.,10.);
-  TH2D *  h2_dEdx_All_pq_1 = new TH2D("h2_dEdx_All_pq_1","h2_dEdx_All_pq_1",500,-2.0,2.0,2000,0.,10.);
-  TH2D *  h2_m2_QA_pq = new TH2D("h2_m2_QA_pq","h2_m2_QA_pq",5000,-5.0,5.0,5000,-0.2,1.6);
-  TH2D *  h2_m2_QA_pq_1 = new TH2D("h2_m2_QA_pq_1","h2_m2_QA_pq_1",5000,-5.0,5.0,5000,-0.2,1.6);
-  TH2D *  h2_m2_QA_pT = new TH2D("h2_m2_QA_pT","h2_m2_QA_pT",5000,-5.0,5.0,5000,-2.0,1.6);
-  TH2D *  h2_m2_QA_pT_1 = new TH2D("h2_m2_QA_pT_1","h2_m2_QA_pT_1",5000,-5.0,5.0,5000,-2.0,1.6);
-
-  TH1D *  h_mult     = new TH1D("h_mult","h_mult",1600,0.0,1600.0);
-  // TH2D *  h2_mult     = new TH2D("h2_mult","h2_mult",400,0.0,400.0,100000,0.,100000.);//test
-
-  TH1D *  h_DCA_r    = new TH1D("h_DCA_r","h_DCA_r",100,0.0,2.0);
-  TH1D *  h_DCA_PRO    = new TH1D("h_DCA_PRO","h_DCA_PRO",100,0.0,2.0);
-  TH1D *  h_DCA_PIM    = new TH1D("h_DCA_PIM","h_DCA_PIM",100,0.0,2.0);
-  TH1D *  h_DCA_mother_r    = new TH1D("h_DCA_mother_r","h_DCA_mother_r",100,0.0,2.0);
-  TH1D *  h_decay_length    = new TH1D("h_decay_length","h_decay_length",1000,0.0,20.0);
-
-  TH1D *  h_K_DCA_r      = new TH1D("h_K_DCA_r","h_K_DCA_r",400,0.0,6.0);
-  TH1D *  h_K_obj_DCA_r  = new TH1D("h_K_obj_DCA_r","h_K_obj_DCA_r",400,0.0,6.0);
-  TH1D *  h_K_diff_DCA_r = new TH1D("h_K_diff_DCA_r","h_K_diff_DCA_r",800,-6.0,6.0);
-
-  TH1D *  h_rapidity_pm = new TH1D("h_rapidity_pm","h_rapidity_pm",100,-2.0,2.0);
-  TH2D *  h2_mT_rapidity_pm = new TH2D("h2_mT_rapidity_pm","h2_mT_rapidity_pm",100,0.0,1.0,20,-2.05,-0.05);
-
-  TH1D *  h_nodecaylength_cut_inv_m_PHI    = new TH1D("h_nodecaylength_cut_inv_m_PHI","h_nodecaylength_cut_inv_m_PHI",1000,0.9,1.1);//.,2.);
-  TH1D *  h_nodipangle_cut_inv_m_PHI    = new TH1D("h_nodipangle_cut_inv_m_PHI","h_nodipangle_cut_inv_m_PHI",1000,0.9,1.1);//.,2.);
-
-  TH1D *  h_inv_m_PHI         = new TH1D("h_inv_m_PHI","h_inv_m_PHI",1000,0.9,1.1);
-  TH1D *  h_prim_inv_m_PHI    = new TH1D("h_prim_inv_m_PHI","h_prim_inv_m_PHI",1000,0.9,1.1);
-
-  TH1D *  h_inv_m_K0S         = new TH1D("h_inv_m_K0S","h_inv_m_K0S",1000,0.0,1.0);
-  TH1D *  h_inv_m_RHO         = new TH1D("h_inv_m_RHO","h_inv_m_RHO",2000,0.45,1.2);
-  TH1D *  h_inv_m_LAMBDA = new TH1D("h_inv_m_LAMBDA","h_inv_m_LAMBDA",1000,1.0,1.18);
-
-  TH2D *  h2_pidprob_vs_nsigma_PI  = new TH2D("h2_pidprob_vs_nsigma_PI","h2_pidprob_vs_nsigma_PI",100,0.0,1.0,100,0.0,10.0);
-  TH2D *  h2_pidprob_vs_nsigma_PRO = new TH2D("h2_pidprob_vs_nsigma_PRO","h2_pidprob_vs_nsigma_PRO",100,0.0,1.0,100,0.0,10.0);
-  TH2D *  h2_pidprob_vs_nsigma_K   = new TH2D("h2_pidprob_vs_nsigma_K","h2_pidprob_vs_nsigma_K",100,0.0,1.0,100,0.0,10.0);
-
-  TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_PI  = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_PI", "h2_TOF_nsigma_vs_TPC_nsigma_PI",100,0.0,10.0,100,0.0,10.0);
-  TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_PRO = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_PRO","h2_TOF_nsigma_vs_TPC_nsigma_PRO",100,0.0,10.0,100,0.0,10.0);
-  TH2D *  h2_TOF_nsigma_vs_TPC_nsigma_K   = new TH2D("h2_TOF_nsigma_vs_TPC_nsigma_K",  "h2_TOF_nsigma_vs_TPC_nsigma_K",100,0.0,10.0,100,0.0,10.0);
-
-  TH2D *  h2_TOF_nsigma_K_vs_PI  = new TH2D("h2_TOF_nsigma_K_vs_PI",   "h2_TOF_nsigma_K_vs_PI",100,0.0,10.0,100,0.0,10.0);
-  TH2D *  h2_TPC_nsigma_K_vs_PI  = new TH2D("h2_TPC_nsigma_K_vs_PI",   "h2_TPC_nsigma_K_vs_PI",100,0.0,10.0,100,0.0,10.0);
-  TH2D *  h2_TOF_nsigma_K_vs_PRO = new TH2D("h2_TOF_nsigma_K_vs_PRO",  "h2_TOF_nsigma_K_vs_PRO",100,0.0,10.0,100,0.0,10.0);
-  TH2D *  h2_TPC_nsigma_K_vs_PRO = new TH2D("h2_TPC_nsigma_K_vs_PRO",  "h2_TPC_nsigma_K_vs_PRO",100,0.0,10.0,100,0.0,10.0);
-
-  // TH1D *  h_PHI_decay_length     = new TH1D("h_PHI_decay_length","h_PHI_decay_length",100,0,10.0);
-  // TH1D *  h_dip_angle            = new TH1D("h_dip_angle","h_dip_angle",1000,-4,4);
-
-  // Histogramming End
-
-  //=============================== Event Loop ===================================================
-  for(Long64_t iEvent = 0; iEvent < events2read; iEvent++)//events2read
-  {
+  TH1D *h_evt       = new TH1D("h_evt","# of events",1,0,1);
+  TH1D *hist_Vz_pri = new TH1D("hist_Vz_pri","V_{Z} [cm]",6000,-300.0,300.0);
+  TH2D *hist_VyVx_pri = new TH2D("hist_VyVx_pri","V_{Y} [cm] vs. V_{X} [cm]",500,-5.0,5.0,500,-5.0,5.0);
+  TH1D *hist_Vr_pri = new TH1D("hist_Vr_pri","V_{R} [cm]",500,0.0,20.0);
+  TH1D *hist_pT       = new TH1D("hist_pT","Transverse momentum pT distribution",64,0.0,32.0);
+  TH1D *hist_mom = new TH1D("hist_mom","p_{mom} [GeV/c]",2000,0.0,10.0);
+  TH1D *hist_DCA = new TH1D("hist_DCA","hist_DCA",100,0,10.0);
+  TH2D *h2_dEdx_All_pq = new TH2D("h2_dEdx_All_pq","dEdx [GeV/cm] vs. q*p [C*GeV/c]",500,-2.0,2.0,2000,0.,10.);
+  TH2D *h2_m2_QA_pq = new TH2D("h2_m2_QA_pq","m^{2} vs. q*p [C*GeV/c]",5000,-5.0,5.0,5000,-0.2,1.6);
+  TH2D *h2_m2_QA_pT = new TH2D("h2_m2_QA_pT","m^{2} vs. q*pT [C*GeV/c]",5000,-5.0,5.0,5000,-2.0,1.6);
+  TH1D *h_mult     = new TH1D("h_mult","# of Good Tracks",1600,0.0,1600.0);
+  TH1D *h_K_DCA_r      = new TH1D("h_K_DCA_r","helix DCA",400,0.0,6.0);
+  TH1D *h_K_obj_DCA_r  = new TH1D("h_K_obj_DCA_r","gDCA",400,0.0,6.0);
+  TH1D *h_K_diff_DCA_r = new TH1D("h_K_diff_DCA_r","Difference between helix DCA and gDCA",800,-6.0,6.0);
+  TH1D *hist_SE_mass_Phi     = new TH1D("hist_SE_mass_Phi","Same event invariant mass",200,0.9,1.1);
+  // ===================== (2) Analysis on each and every events  ==============
+  for(Long64_t iEvent = 0; iEvent < events2read; iEvent++){
     if((iEvent+1)%100 == 0) std::cout << "Working on event #[" << (iEvent+1) << "/" << events2read << "]" << std::endl;
-
     Bool_t readEvent = picoReader->readPicoEvent(iEvent);
-
-    if( !readEvent )
-    {
-      std::cout << "Something went wrong, Master! Nothing to analyze..." << std::endl;
+    if( !readEvent ){
+      std::cout << "Something went wrong, my Lord! Nothing to analyze..." << std::endl;
       break;
     }
-
-    StPicoDst *dst = picoReader->picoDst();
-    // Retrieve picoDst
-
+    StPicoDst   *dst   = picoReader->picoDst();
     StPicoEvent *event = dst->event();
-    // Retrieve event information
-
-    Int_t runId_Dst   = event->runId();
-    Int_t eventId_Dst = event->eventId();
-    // std::cout << " runId from picoDst = "   <<  runId_Dst << std::endl;
-    // std::cout << " eventId from picoDst = " <<  eventId_Dst << std::endl;
-
-    if( !event )
-    {
-      std::cout << "Something went wrong, Master! Event is hiding from me..." << std::endl;
+    if( !event ){
+      std::cout << "Something went wrong, my Lord! Event is hiding from me..." << std::endl;
       break;
     }
-
-    const Float_t B = event->bField();
-
-    int i_muEvent_num = event -> eventId();
-
-    runNumber        = event->runId();
-    eventNumber      = event->eventId();
-
-    double d_MagField = event->bField();
-
-    //============================ Trigger Selection ==============================================
+    runNumber     = event->runId();
+    eventNumber   = event->eventId();
+    Int_t nTracks = dst->numberOfTracks();
+    const Float_t _f_MagField = event->bField();
+    // --------------------------- Trigger Selection ---------------------------
     triggerIDs.clear();
-    triggerIDs       = event->triggerIds();
+    triggerIDs      = event->triggerIds();
     bool b_bad_trig = true;
-
-    // loop for the trigger ids and see if any == 1
-    for(unsigned int i=0; i < triggerIDs.size(); i++)
-      {
-        if(triggerIDs[i] == 630802) b_bad_trig = false; // hlt_fixedTargetGood 7.2GeV
-      }
-
-    //=========================== End Trigger Slection ===========================================
-
-    TVector3 pVtx     = event->primaryVertex();
+    for(unsigned int i=0; i < triggerIDs.size(); i++){
+      if(triggerIDs[i] == 630052) b_bad_trig = false; // bbce_tofmult1 production_26p5GeV_fixedTarget_2018
+    }
+    TVector3 pVtx               = event->primaryVertex();
     Double_t primaryVertex_perp = (Double_t)event->primaryVertex().Perp();
-
-    // Primary Vertex
-
-    //=========================== Z-VTX Selection =================================================
-    TVector3 v3D_vtx  = event->primaryVertex();
     d_zvtx = pVtx.z();
     d_xvtx = pVtx.x();
     d_yvtx = pVtx.y();
-
-    h_zvtx -> Fill(d_zvtx);
-    bool b_bad_zvtx   = ((d_zvtx < 199.0) || (d_zvtx > 202.0)); //FXT_26p5_2018
+    hist_Vz_pri->Fill(d_zvtx);
+    hist_VyVx_pri->Fill(d_xvtx,d_yvtx);
+    hist_Vr_pri->Fill(primaryVertex_perp);
+    hist_DCA  ->Fill(picoTrack->gDCA(d_xvtx,d_yvtx,d_zvtx));
+    bool b_bad_zvtx   =  ((d_zvtx < 197.6) || (d_zvtx > 202.4)); //FXT_26p5_2018 // loose systematic cut
     bool b_bad_xvtx   =  ((d_xvtx < -1.0) || (d_xvtx > 1.0)); //FXT_26p5_2018
     bool b_bad_yvtx   =  ((d_yvtx < -3.0) || (d_yvtx > -0.5)); //FXT_26p5_2018
-    bool b_bad_rvtx   =  primaryVertex_perp > 3.0;
-
-    //======================== END Z-VTX Selection =================================================
-
-    bool b_bad_evt  = b_bad_zvtx || b_bad_trig || b_bad_xvtx || b_bad_yvtx || b_bad_rvtx;
+    bool b_bad_rvtx   =  sqrt(pow(d_xvtx,2)+pow(d_yvtx+2,2))> 2.4;  // loose systematic cut
+    bool b_bad_evt  = b_bad_zvtx || b_bad_trig /*|| b_bad_xvtx || b_bad_yvtx */|| b_bad_rvtx;
     if(b_bad_evt) continue;
-    // Bad Event Cut
-
-    //======================== Track Analysis =====================================================
-
-    Int_t nTracks = dst->numberOfTracks();
-    //Number of tracks in this event
-
-    bool b_cent_01  = false; // 0  < centrality <= 5%
-    bool b_cent_02  = false; // 5  < centrality <= 10%
-    bool b_cent_03  = false; // 10 < centrality <= 15%
-    bool b_cent_04  = false; // 15 < centrality <= 20%
-    bool b_cent_05  = false; // 20 < centrality <= 25%
-    bool b_cent_06  = false; // 25 < centrality <= 30%
-    bool b_cent_07  = false; // centrality > 30%
-
-    //========================= Track loop to define good tracks ======================================================
+    // ====== (3) Track Loop to determine nGoodTracks (centrality)  ============
     int nGoodTracks = 0;
-    int nTrkvsCuts  = 0;
-
-    /*test
-    h2_dEdx_All_pq_1->Reset();
-    h2_m2_QA_pq_1   ->Reset();
-    h2_m2_QA_pT_1   ->Reset();
-    */
-    for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
-    {
+    int nFXTMult = 0;
+    std::vector<StPicoTrack *> vGoodTracks; // vector of good tracks for TPC event plane Q-vector loop
+    for(Int_t iTrk=0; iTrk<nTracks; iTrk++){
       StPicoTrack *picoTrack = dst->track(iTrk);
-      // Retrieve i-th Pico Track
-
       if(!picoTrack) continue;
-      // PicoTrack Cut
-
-      bool b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
-      bool b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.52);
-      bool b_bad_track    = b_bad_dEdx || b_bad_tracking;
-      if(b_bad_track) continue;
-      // Track-Level Cut
-
       if(!picoTrack->isPrimary()) continue;
-      // Primary Track Cut
-
-      // To get beta from Btof to calculate mass2
-      StPicoBTofPidTraits *trait        = NULL;
+      nFXTMult++;
+      StPicoBTofPidTraits *trait = NULL;
+      double        d_tofBeta    = -999.;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
-      double d_tofBeta0                 = -999;
-      if(trait) d_tofBeta0              = trait->btofBeta();
-
-      double d_px0      = picoTrack->gMom().x();
-      double d_py0      = picoTrack->gMom().y();
-      double d_pz0      = picoTrack->gMom().z();
-      double d_pT0      = picoTrack->gPt();
-      double d_mom0     = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
-      double mass2      = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-
-      /*test
-      h2_dEdx_All_pq_1->Fill(d_mom0/(picoTrack->charge()),picoTrack->dEdx());
-`     */
-      h2_dEdx_All_pq->Fill(d_mom0/(picoTrack->charge()),picoTrack->dEdx());
-
-      nGoodTracks++;
-
-      if(d_tofBeta0 == -999) continue;
-      // TOF Beta Cut
-
-      /*test
-      h2_m2_QA_pq_1   ->Fill(d_mom0/(picoTrack->charge()),mass2);
-      h2_m2_QA_pT_1   ->Fill(d_pT0/(picoTrack->charge()),mass2);
-      */
+      if(trait)        d_tofBeta = trait->btofBeta();
+      double d_px  = picoTrack->pMom().x();
+      double d_py  = picoTrack->pMom().y();
+      double d_pz  = picoTrack->pMom().z();
+      double d_pT  = picoTrack->pPt();
+      double d_mom = sqrt(d_pT*d_pT + d_pz*d_pz);
+      hist_pT   ->Fill(d_pT);
+      hist_mom  ->Fill(d_mom);
+      double mass2 = d_mom*d_mom*((1.0/(d_tofBeta*d_tofBeta))-1.0);
+      bool    b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
+      bool    b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.45); // loose cut
+      bool b_not_enough_hits = ((double)picoTrack->nHitsFit()) < 10; // loose cut 15;
+      bool    b_bad_DCA      = false;// loose cut //(picoTrack->gDCA(primaryVertex_X,primaryVertex_Y,primaryVertex_Z) >= 3.0);
+      bool    b_bad_track    = b_bad_dEdx || b_bad_tracking || b_not_enough_hits || b_bad_DCA;
+      if(b_bad_track) continue;
+      h2_dEdx_All_pq->Fill(d_mom/(picoTrack->charge()),picoTrack->dEdx());
+      nGoodTracks++; // nGoodTracks is used to determine centrality later in the event loop
+      vGoodTracks.push_back(picoTrack);
+      if(d_tofBeta == -999) continue;
       h2_m2_QA_pq   ->Fill(d_mom0/(picoTrack->charge()),mass2);
       h2_m2_QA_pT   ->Fill(d_pT0/(picoTrack->charge()),mass2);
-
-      h_pT            ->Fill(d_pT0);
-
-      nTrkvsCuts++;
-
     }
-
-    h_mult->Fill(nGoodTracks);
-    /*test
-    h2_dEdx_All_pq->Add(h2_dEdx_All_pq_1);
-    h2_m2_QA_pq   ->Add(h2_m2_QA_pq_1);
-    h2_m2_QA_pT   ->Add(h2_m2_QA_pT_1);
-    */
-    //======================== END Track loop to define good tracks ====================================================
-
-    //========================= Track Cut Settings ===============================================
-    int i_Nhits_min = 9;  //minimum number of hits
-
-    //Mon Jul  3 09:17:54 EDT 2017 from phi paper
-    double d_pT_min = 0.1;//0.05;
-    double d_pT_max = 10.0;//0.05;
-    double d_mom_min = 0.1;//0.05;
-    double d_mom_max = 10.0;// 1.0;//0.05;
-    double d_SigmaCutLevel = 4.0;//3.0;//4.0; // PID Sigma Cut // Mon Jul  3 09:16:46 EDT 2017
-
-    //--- Not being used Fri Jun 16 10:48:30 EDT 2017
-    // double d_PRO_daughter_DCA = 0.3; // trk must be greater than this dca
-    // double d_PI_daughter_DCA  = 1.0; // trk must be greater than this dca
-
-    // Lambda: 1.0, K0s 1.2
-    //  double d_cut_dca_daughters    = 2.0; //distance between daughters, must be less than this
-    // double d_cut_dca_daughters_lam    = 1.0;//2.0; //distance between daughters, must be less than this
-    // double d_cut_dca_daughters_k0s    = 1.2; //distance between daughters, must be less than this
-
-
-    // Lambda: 1.5 Anti Lambda: 2.0 K0s: 1.0
-    //double d_cut_dca_mother       = 5.0; // must be less than this
-    // double d_cut_dca_mother_lam       = 1.5;//5.0; // must be less than this
-    // double d_cut_dca_mother_k0s       = 1.0; // must be less than this
-
-    // Lambda: 3.0, K0s: 2.0
-    //  double d_cut_mother_decay_length = 3.0; // must be greater than this
-    // double d_cut_mother_decay_length_lam = 3.0; // must be greater than this
-    // double d_cut_mother_decay_length_k0s = 2.0; // must be greater than this
-    // double d_cut_mother_decay_length_RHO = 0.5; // must be LESS    than this
-    // double d_cut_mother_decay_length_PHI = 0.5; // must be LESS    than this
-    //======================== END Track Settings ================================================
-
-    //======================= Primary Track Loop  to build kaon TTree =================================================
+    h_mult->Fill(nFXTMult); // use the # of primary tracks to define centrality
+    // ====== (4) Track Loop to Get Kaon tracks and build Kaon TTree ===========
     vector<StPicoTrack *> v_pri_tracks;
     vector<StPicoTrack *> v_pri_tracks_pl;
     vector<StPicoTrack *> v_pri_tracks_mi;
-
-    int index = 0;
-
-    double d_PI_m    = 0.13957018;
-    double d_PRO_m   = 0.9382720813;
-    double d_K_m     = 0.493677;
-
-    for(Int_t iTrk=0; iTrk<nTracks; iTrk++)
-    {
-      StPicoTrack *picoTrack = dst->track(iTrk);
-      // Retrieve i-th pico track
-
-      if(picoTrack == NULL)       continue;
-
-      if(!picoTrack->isPrimary()) continue;
-      // Primary Track Cut
-
-      // To get beta from Btof to calculate mass2
-      StPicoBTofPidTraits *trait = NULL;
+    for(unsigned int iTrk=0; i<vGoodTracks.size();i++){
+      StPicoTrack* picoTrack = vGoodTracks[iTrk];
+      StPicoBTofPidTraits *trait        = NULL;
+      Short_t trk_charge;
+      Double_t d_pt,d_px,d_py,d_pz,d_ptot;
+      Double_t mass2 =-999.0,d_tofBeta =-999.0;
+      Double_t energyProton,energyKaon,energyPion,rapProton,rapKaon,rapPion,mtProton,mtKaon,mtPion;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
+      if(trait) d_tofBeta    = trait->btofBeta();
+      trk_charge = picoTrack->charge();
+      d_px     = picoTrack->pMom().x();
+      d_py     = picoTrack->pMom().y();
+      d_pz     = picoTrack->pMom().z();
+      d_pT     = picoTrack->pPt();
+      d_ptot   = sqrt(d_pT*d_pT + d_pz*d_pz);
 
-      //nHits minimum cut
-      unsigned short nHits = picoTrack->nHits();
-      if(nHits < i_Nhits_min)     continue;
-
-      bool b_bad_dEdx      = false;
-      bool b_bad_tracking  = false;
-      bool b_bad_ToF       = false;
-
-      b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
-      b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.52);
-
-      if(trait) b_bad_ToF       = (trait->btof() <= 0.0);
-      bool b_bad_track          = b_bad_dEdx || b_bad_tracking;
-      if(b_bad_track)              continue;
-      // Bad Track Cut
-
+      if(tofBeta != -999.0) mass2 = ptot * ptot *( ( 1.0 / ( tofBeta*tofBeta ) ) - 1.0 );
+      Int_t particleType = -999; //default -999. 0,1,2,3,4 indicate p, K+, K-, \Pi+, \Pi-
+      energyProton = TMath::Sqrt(d_ptot*d_ptot + _massProton*_massProton);
+      energyKaon = TMath::Sqrt(d_ptot*d_ptot + _massKaon*_massKaon);
+      energyPion = TMath::Sqrt(d_ptot*d_ptot + _massPion*_massPion);
+      rapProton    = 0.5*TMath::Log( (energyProton + d_pz) / (energyProton - d_pz) );
+      rapKaon    = 0.5*TMath::Log( (energyKaon + d_pz) / (energyKaon - d_pz) );
+      rapPion    = 0.5*TMath::Log( (energyPion + d_pz) / (energyPion - d_pz) );
+      mtProton   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
+      mtKaon   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
+      mtPion   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
+      h2_dEdxVsPq->Fill(charge*ptot,picoTrack->dEdx());
+      h2_dEdxVspTq->Fill(charge*pt,picoTrack->dEdx());
       double d_TPCnSigmaElectron = fabs(picoTrack->nSigmaElectron());
       double d_TPCnSigmaPion   = fabs(picoTrack->nSigmaPion());
       double d_TPCnSigmaProton = fabs(picoTrack->nSigmaProton());
       double d_TPCnSigmaKaon   = fabs(picoTrack->nSigmaKaon());
-
-      double tofBeta       = -999;
-      if(trait) tofBeta    = trait->btofBeta();
-
-      double d_tofBeta0    = -999;
-      if(trait) d_tofBeta0 = trait->btofBeta();
-
-      // test new sets of PID cuts
-      bool b_PI  = false; // fabs(d_TPCnSigmaPion)   < d_SigmaCutLevel;
-      bool b_PRO = false; // fabs(d_TPCnSigmaProton) < d_SigmaCutLevel;
-      bool b_K   = false; //fabs(d_TPCnSigmaKaon)   < d_SigmaCutLevel;
-      bool b_E   = false; //fabs(d_TPCnSigmaElectron)< d_SigmaCutLevel;
-
-      /********* Remove this part of PID cut
-      if( b_E
-         && (d_TPCnSigmaElectron < d_TPCnSigmaPion)
-         && (d_TPCnSigmaElectron < d_TPCnSigmaProton)
-         && (d_TPCnSigmaElectron < d_TPCnSigmaKaon) )
-        { b_E = true; b_PI = false; b_PRO = false; b_K = false;}
-
-      if( b_PI
-         && (d_TPCnSigmaPion < d_TPCnSigmaElectron)
-         && (d_TPCnSigmaPion < d_TPCnSigmaKaon)
-         && (d_TPCnSigmaPion < d_TPCnSigmaProton) )
-         { b_E = false; b_PI = true; b_PRO = false; b_K = false;}
-
-      if( b_PRO
-         && (d_TPCnSigmaProton < d_TPCnSigmaElectron)
-         && (d_TPCnSigmaProton < d_TPCnSigmaPion)
-         && (d_TPCnSigmaProton < d_TPCnSigmaKaon) )
-         { b_E = false; b_PI = false; b_PRO = true; b_K = false;}
-
-      if( b_K
-         && (d_TPCnSigmaKaon < d_TPCnSigmaElectron)
-         && (d_TPCnSigmaKaon < d_TPCnSigmaProton)
-         && (d_TPCnSigmaKaon < d_TPCnSigmaPion) )
-         { b_E = false; b_PI = false; b_PRO = false; b_K = true;}
-      */
-
-      double d_charge     = picoTrack->charge();
-      double d_px0        = picoTrack->pMom().x();
-      double d_py0        = picoTrack->pMom().y();
-      double d_pz0        = picoTrack->pMom().z();
-      double d_pT0        = picoTrack->pPt();
-      double d_mom0       = sqrt(d_pT0*d_pT0 + d_pz0*d_pz0);
-
-      double mass2        = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
-      double d_E_PRO      = sqrt(d_PRO_m*d_PRO_m + d_mom0*d_mom0);
-      double d_E_PI       = sqrt(d_PI_m*d_PI_m + d_mom0*d_mom0);
-      double d_E_K        = sqrt(d_K_m*d_K_m + d_mom0*d_mom0);
-
-      double d_y_PRO      = 0.5*TMath::Log((d_E_PRO + d_pz0)/(d_E_PRO - d_pz0));
-      double d_y_PI       = 0.5*TMath::Log((d_E_PI + d_pz0)/(d_E_PI - d_pz0));
-      double d_y_K        = 0.5*TMath::Log((d_E_K + d_pz0)/(d_E_K - d_pz0));
-
-      if(d_charge > 0.0)
-        {
-          if( b_E
-            && (fabs(d_TPCnSigmaElectron) < 3.0)
-            && (mass2 < 0.005)
-            && (mass2 > -0.008)
-            && (d_pT0 < 0.3)){
-              b_E = true; b_PI = false; b_PRO = false; b_K = false;
-            // h_E_plus_pT -> Fill(d_pT0);
-            // h_E_plus_y  -> Fill(d_y_K);
-            // h2_E_plus_pT_vs_y -> Fill(d_y_K,d_pT0);
-            // h_E_plus_mT_Diff -> Fill((d_mT_E - d_E_m));
-          }
-          // if( b_K
-          //   && (fabs(d_TPCnSigmaKaon) < 3.0)
-          //   && (mass2 > 0.15)
-          //   && (mass2 < 0.35))
-          if( (fabs(d_TPCnSigmaKaon) < 2.0)
-             && ( d_tofBeta0 != -999.0
-                 && mass2 > 0.19
-                 && mass2 < 0.3
-                )
-             && d_pT0 > 0.2
-          )
-          {
-               b_E = false; b_PI = false; b_PRO = false; b_K = true;
-            // h_K_plus_pT -> Fill(d_pT0);
-            // h_K_plus_y  -> Fill(d_y_K);
-            // h2_K_plus_pT_vs_y -> Fill(d_y_K,d_pT0);
-            // h_K_plus_mT_Diff -> Fill((d_mT_K - d_K_m));
-          }
-          if( b_PI
-            && (fabs(d_TPCnSigmaPion) < 2.0)
-            && (mass2 > -0.1)
-            && (mass2 < 0.15)
-            && ((d_pT0 > 0.4) || (mass2 > 0.008))
-          ){
-            b_E = false; b_PI = true; b_PRO = false; b_K = false;
-            // h_PI_plus_pT -> Fill(d_pT0);
-            // h_PI_plus_y  -> Fill(d_y_PI);
-            // h2_PI_plus_pT_vs_y -> Fill(d_y_PI,d_pT0);
-            // h_PI_plus_mT_Diff -> Fill((d_mT_PI - d_PI_m));
-          }
-          if( b_PRO
-            && (fabs(d_TPCnSigmaProton) < 3.0)
-            && (mass2 > 0.7)
-            && (mass2 < 1.1))
-            {
-              b_E = false; b_PI = false; b_PRO = true; b_K = false;
-            // h_PRO_plus_pT -> Fill(d_pT0);
-            // h_PRO_plus_y  -> Fill(d_y_PRO);
-            // h2_PRO_plus_pT_vs_y -> Fill(d_y_PRO,d_pT0);
-            // h_PRO_plus_mT_Diff -> Fill((d_mT_PRO - d_PRO_m));
-          }
+      double d_dEdx = picoTrack->nHitsDedx();
+      Double_t d_nSigmaKaonCut, d_KaonM2low, d_KaonM2high, d_KaonpTlow;
+      // default -> loose cuts
+      d_nSigmaKaonCut = 4.0; //2.0 // default cuts
+      d_KaonM2low     = 0.15; //0.16
+      d_KaonM2high    = 0.33; //0.33
+      d_KaonpTlow     = 0.0; //0.2
+      // ------------------------ Particle identifications ------------------------------
+      // Reference: PicoAnalyzer.cxx in Repository EpdAna, brach EpdEpPhiFlow_v2_SysErr
+      if( // Proton PID: require both TPC and TOF
+        TMath::Abs(picoTrack->nSigmaProton()) < 2.0 &&
+        tofBeta != -999.0 && mass2 > 0.7 && mass2 < 1.1 &&
+        pt > 0.2 &&
+        charge > 0
+      ){
+        particleType=0;// Proton
+        // nProtons++;
+        // // Fill histograms
+        // hist_pt_proton->Fill(pt);
+        // hist_eta_proton->Fill(eta);
+        // hist_y_proton->Fill(rapProton);
+        // hist_phi_proton->Fill(phi);
+        // hist_rap_eta_proton->Fill(eta,rapProton);
+        // hist_pt_y_proton->Fill(rapProton,pt,1);
+        // hist_pt_eta_proton->Fill(eta,pt,1);
+        // hist_dEdx_proton->Fill(charge*ptot,picoTrack->dEdx());
+        // hist_beta_proton->Fill(charge*ptot,1.0/tofBeta);
+        // hist_mass_proton->Fill(charge*ptot,mass2);
+      } else if( // Kaons PID: require both TPC and TOF
+        TMath::Abs(picoTrack->nSigmaKaon()) < d_nSigmaKaonCut &&
+        tofBeta != -999.0 && mass2 > d_KaonM2low && mass2 < d_KaonM2high
+        && pt > d_KaonpTlow
+      ){
+        if(charge > 0){
+          particleType=1;// K+
+          // nKaonPlus++;
+          // v_KaonPlus_tracks.push_back(picoTrack); // push back K+ tracks
+          // // Fill histograms
+          // hist_pt_kaonPlus->Fill(pt);
+          // hist_eta_kaonPlus->Fill(eta);
+          // hist_y_kaonPlus->Fill(rapKaon);
+          // hist_phi_kaonPlus->Fill(phi);
+          // hist_rap_eta_kaonPlus->Fill(eta,rapKaon);
+          // hist_pt_y_kaonPlus->Fill(rapKaon,pt,1);
+          // hist_pt_eta_kaonPlus->Fill(eta,pt,1);
+          // hist_dEdx_kaonPlus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_kaonPlus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_kaonPlus->Fill(charge*ptot,mass2);
+        } else { // charge < 0
+          particleType=2;// K-
+          // nKaonMinus++;
+          // v_KaonMinus_tracks.push_back(picoTrack); // push back K+ tracks
+          // // Fill histograms
+          // hist_pt_kaonMinus->Fill(pt);
+          // hist_eta_kaonMinus->Fill(eta);
+          // hist_y_kaonMinus->Fill(rapKaon);
+          // hist_phi_kaonMinus->Fill(phi);
+          // hist_rap_eta_kaonMinus->Fill(eta,rapKaon);
+          // hist_pt_y_kaonMinus->Fill(rapKaon,pt,1);
+          // hist_pt_eta_kaonMinus->Fill(eta,pt,1);
+          // hist_dEdx_kaonMinus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_kaonMinus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_kaonMinus->Fill(charge*ptot,mass2);
         }
-      else
-        {
-          if( b_E
-            && (fabs(d_TPCnSigmaElectron) < 3.0)
-            && (mass2 < 0.005)
-            && (mass2 > -0.008)
-            && (d_pT0 < 0.3)){
-              b_E = true; b_PI = false; b_PRO = false; b_K = false;
-            // h_E_minus_pT -> Fill(d_pT0);
-            // h_E_minus_y  -> Fill(d_y_K);
-            // h2_E_minus_pT_vs_y -> Fill(d_y_K,d_pT0);
-            // h_E_minus_mT_Diff -> Fill((d_mT_E - d_E_m));
-          }
-          // if( b_K
-          //   && (fabs(d_TPCnSigmaKaon) < 3.0)
-          //   && (mass2 > 0.15)
-          //   && (mass2 < 0.35))
-          if( (fabs(d_TPCnSigmaKaon) < 2.0)
-             && ( d_tofBeta0 != -999.0
-                 && mass2 > 0.19
-                 && mass2 < 0.3
-                )
-             && d_pT0 > 0.2
-          )
-          {
-               b_E = false; b_PI = false; b_PRO = false; b_K = true;
-            // h_K_minus_pT -> Fill(d_pT0);
-            // h_K_minus_y  -> Fill(d_y_K);
-            // h2_K_minus_pT_vs_y -> Fill(d_y_K,d_pT0);
-            // h_K_minus_mT_Diff -> Fill((d_mT_K - d_K_m));
-          }
-          if( b_PI
-            && (fabs(d_TPCnSigmaPion) < 2.0)
-            && (mass2 > -0.1)
-            && (mass2 < 0.15)
-            && ((d_pT0 > 0.4) || (mass2 > 0.008))
-          ){
-            b_E = false; b_PI = true; b_PRO = false; b_K = false;
-            // h_PI_minus_pT -> Fill(d_pT0);
-            // h_PI_minus_y  -> Fill(d_y_PI);
-            // h2_PI_minus_pT_vs_y -> Fill(d_y_PI,d_pT0);
-            // h_PI_minus_mT_Diff -> Fill((d_mT_PI - d_PI_m));
-          }
-          if( b_PRO
-            && (fabs(d_TPCnSigmaProton) < 3.0)
-            && (mass2 > 0.7)
-            && (mass2 < 1.1))
-            {
-              b_E = false; b_PI = false; b_PRO = true; b_K = false;
-            // h_PRO_minus_pT -> Fill(d_pT0);
-            // h_PRO_minus_y  -> Fill(d_y_PRO);
-            // h2_PRO_minus_pT_vs_y -> Fill(d_y_PRO,d_pT0);
-            // h_PRO_minus_mT_Diff -> Fill((d_mT_PRO - d_PRO_m));
-          }
+      } else if( // Pions PID: require both TPC and TOF
+        TMath::Abs(picoTrack->nSigmaPion()) <  2.0 &&
+        tofBeta != -999.0 && mass2 > -0.01 && mass2 < 0.05 &&
+        pt > 0.2  &&
+        !(TMath::Abs(mass2)<0.005 && ptot<0.25) // Remove electron influence
+      ){
+        if(charge > 0){
+          particleType=3;// \Pi+
+          // nPionPlus++;
+          // // Fill histograms
+          // hist_pt_pionPlus->Fill(pt);
+          // hist_eta_pionPlus->Fill(eta);
+          // hist_y_pionPlus->Fill(rapPion);
+          // hist_phi_pionPlus->Fill(phi);
+          // hist_rap_eta_pionPlus->Fill(eta,rapPion);
+          // hist_pt_y_pionPlus->Fill(rapPion,pt,1);
+          // hist_pt_eta_pionPlus->Fill(eta,pt,1);
+          // hist_dEdx_pionPlus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_pionPlus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_pionPlus->Fill(charge*ptot,mass2);
+        } else { // charge < 0
+          particleType=4;// \Pi-
+          // nPionMinus++;
+          // // Fill histograms
+          // hist_pt_pionMinus->Fill(pt);
+          // hist_eta_pionMinus->Fill(eta);
+          // hist_y_pionMinus->Fill(rapPion);
+          // hist_phi_pionMinus->Fill(phi);
+          // hist_rap_eta_pionMinus->Fill(eta,rapPion);
+          // hist_pt_y_pionMinus->Fill(rapPion,pt,1);
+          // hist_pt_eta_pionMinus->Fill(eta,pt,1);
+          // hist_dEdx_pionMinus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_pionMinus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_pionMinus->Fill(charge*ptot,mass2);
         }
-
-        if(d_charge > 0.0)
-          {
-            if(b_PI||b_PRO||b_E)    continue;
-            if(!b_K)                continue;
-          }
-        else
-          {
-            if(b_E||b_PI||b_PRO)    continue;
-            if(!b_K)                continue;
-          }
-        // Kaon Cut
-
-        if( (d_pT0<d_pT_min)   || (d_pT0 > d_pT_max))   continue;
-        if( (d_mom0<d_mom_min) || (d_mom0 > d_mom_max)) continue;
-        //pT Min, Mom Min Cut
-
-        bool b_bad_DCA       = false;
-        StPicoPhysicalHelix trackhelix = picoTrack->helix(B);
-        double helixpathl              = trackhelix.pathLength(v3D_vtx, false);
-        TVector3 v3D_dca               = trackhelix.at(helixpathl)-v3D_vtx;
-        double d_helix_DCA_r           = v3D_dca.Mag();
-        double d_DCA_r_cut             = 3.0;
-        TVector3 v3D_obj_DCA           = picoTrack->gDCA(pVtx);
-        double d_obj_DCA               = v3D_obj_DCA.Mag();
-
-        h_K_DCA_r      -> Fill(d_helix_DCA_r);
-        h_K_obj_DCA_r  -> Fill(d_obj_DCA);
-        h_K_diff_DCA_r -> Fill(d_helix_DCA_r-d_obj_DCA);
-
-        if(d_helix_DCA_r > d_DCA_r_cut) b_bad_DCA == true;
-        if(b_bad_DCA) continue;
-        //Kaon DCA Cut
-
-        Kaoninfo.reset();
-
-        if(d_charge > 0.0)
-        {
-          hist_pt_y_kaonPlus->Fill(d_y_K,d_pT0);
-          v_pri_tracks_pl.push_back(picoTrack);
+      }
+      // Additional Kaon canditated that there's no TOF -> tofBeta == -999.0
+      // # Systematic Analysis
+      // sys_cutN == 16; // TPCpid
+      if( // Kaons PID: tracks that only have TPC, no TOF
+        // sys_cutN == 16 &&
+        TMath::Abs(picoTrack->nSigmaKaon()) < d_nSigmaKaonCut &&
+        TMath::Abs(picoTrack->nSigmaKaon()) < TMath::Abs(picoTrack->nSigmaElectron()) &&
+        TMath::Abs(picoTrack->nSigmaKaon()) < TMath::Abs(picoTrack->nSigmaPion()) &&
+        TMath::Abs(picoTrack->nSigmaKaon()) < TMath::Abs(picoTrack->nSigmaProton()) &&
+        tofBeta == -999.0
+        && pt > d_KaonpTlow
+      ){
+        if(charge > 0){
+          particleType=1;// K+
+          // nKaonPlus++;
+          // v_KaonPlus_tracks.push_back(picoTrack); // push back K+ tracks
+          // // Fill histograms
+          // hist_pt_kaonPlus->Fill(pt);
+          // hist_eta_kaonPlus->Fill(eta);
+          // hist_y_kaonPlus->Fill(rapKaon);
+          // hist_phi_kaonPlus->Fill(phi);
+          // hist_rap_eta_kaonPlus->Fill(eta,rapKaon);
+          // hist_pt_y_kaonPlus->Fill(rapKaon,pt,1);
+          // hist_pt_eta_kaonPlus->Fill(eta,pt,1);
+          // hist_dEdx_kaonPlus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_kaonPlus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_kaonPlus->Fill(charge*ptot,mass2);
+        } else { // charge < 0
+          particleType=2;// K-
+          nKaonMinus++;
+          // v_KaonMinus_tracks.push_back(picoTrack); // push back K+ tracks
+          // // Fill histograms
+          // hist_pt_kaonMinus->Fill(pt);
+          // hist_eta_kaonMinus->Fill(eta);
+          // hist_y_kaonMinus->Fill(rapKaon);
+          // hist_phi_kaonMinus->Fill(phi);
+          // hist_rap_eta_kaonMinus->Fill(eta,rapKaon);
+          // hist_pt_y_kaonMinus->Fill(rapKaon,pt,1);
+          // hist_pt_eta_kaonMinus->Fill(eta,pt,1);
+          // hist_dEdx_kaonMinus->Fill(charge*ptot,picoTrack->dEdx());
+          // hist_beta_kaonMinus->Fill(charge*ptot,1.0/tofBeta);
+          // hist_mass_kaonMinus->Fill(charge*ptot,mass2);
         }
-        else if(d_charge < 0.0)
-        {
-          hist_pt_y_kaonMinus->Fill(d_y_K,d_pT0);
-          v_pri_tracks_mi.push_back(picoTrack);
-        }
-        v_pri_tracks.push_back(picoTrack);
+      }
 
-        if(d_charge < 0)      Kaoninfo.b_pos_charge = false;
-        else                  Kaoninfo.b_pos_charge = true;
-        Kaoninfo.runNumber   = runNumber;
-        Kaoninfo.eventNumber = eventNumber;
-        Kaoninfo.nGoodTracks = nGoodTracks;
+      if(particleType !=1 && particleType !=2) continue; // not a kaon track
+      Kaoninfo.reset();
+      if(particleType == 1){
+        hist_pt_y_kaonPlus->Fill(d_y_K,d_pT0);
+      } else if(particleType == 2){
+        hist_pt_y_kaonMinus->Fill(d_y_K,d_pT0);
+      }
+      if(d_charge < 0)      Kaoninfo.b_pos_charge = false;
+      else                  Kaoninfo.b_pos_charge = true;
+      Kaoninfo.b_bad_TOF = b_bad_ToF ;
 
-        Kaoninfo.px = d_px0;
-        Kaoninfo.py = d_py0;
-        Kaoninfo.pz = d_pz0;
+      Kaoninfo.runNumber   = runNumber;
+      Kaoninfo.eventNumber = eventNumber;
+      Kaoninfo.nGoodTracks = nGoodTracks;
+      Kaoninfo.nFXTMult    = nFXTMult;
 
-        Kaoninfo.tofBeta = tofBeta;
+      Kaoninfo.px = d_px;
+      Kaoninfo.py = d_py;
+      Kaoninfo.pz = d_pz;
 
-        Kaoninfo.x_vtx = v3D_vtx.x();
-        Kaoninfo.y_vtx = v3D_vtx.y();
-        Kaoninfo.z_vtx = v3D_vtx.z();
+      Kaoninfo.x_vtx = d_xvtx;
+      Kaoninfo.y_vtx = d_yvtx;
+      Kaoninfo.z_vtx = d_zvtx;
+      Kaoninfo.r_vtx = sqrt(pow(d_xvtx,2)+pow(d_yvtx+2,2));
+      Kaoninfo.DCA_r = picoTrack->gDCA(d_xvtx,d_yvtx,d_zvtx);
 
-        Kaoninfo.d_TPCnSigmaKaon = d_TPCnSigmaKaon;
+      Kaoninfo.tofBeta = d_tofBeta;
+      Kaoninfo.mass2 = mass2;
 
-        Kaoninfo.DCA_r = d_obj_DCA;
+      Kaoninfo.nHitsDedx = d_dEdx;
+      Kaoninfo.nHitsFit = (double)picoTrack->nHitsFit();
+      Kaoninfo.nHitsRatio = (double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss();
 
-        Kaoninfo.b_bad_TOF = b_bad_ToF ;//|| b_bad_TOF_match;
-        t_K -> Fill();
-
-        // Fill Tree
-        index++;
-
+      Kaoninfo.d_TPCnSigmaKaon = d_TPCnSigmaKaon;
+      t_K -> Fill();
     }
-    //=================== END Primary Track Loop =================================================
-
-    i_event++;
-    h_evt -> Fill(0.5);
   }
-  //=============================== End Event Loop ===============================================
-
-  outputFile->cd();
-
-  t_K ->Write();
-  hist_pt_y_kaonPlus->Write();
-  hist_pt_y_kaonMinus->Write();
-
-  h_evt      -> Write();
-  h_zvtx      -> Write();
-  h_pT       -> Write();
-  // h2_dEdx_PI_pq -> Write();
-  // h2_dEdx_PRO_pq -> Write();
-  // h2_dEdx_K_pq -> Write();
-  h2_dEdx_All_pq->Write();
-  h2_m2_QA_pq->Write();
-  h2_m2_QA_pT->Write();
-  h_mult     -> Write();
-  h_DCA_r    -> Write();
-  h_DCA_PRO    -> Write();
-  h_DCA_PIM    -> Write();
-  h_DCA_mother_r    -> Write();
-  // h_rapidity_pm -> Write();
-  // h2_mT_rapidity_pm -> Write();
-
-  h_nodecaylength_cut_inv_m_PHI -> Write();
-  h_nodipangle_cut_inv_m_PHI -> Write();
-  h_inv_m_PHI    -> Write();
-  h_prim_inv_m_PHI -> Write();
-  h_inv_m_RHO    -> Write();
-  h_inv_m_K0S    -> Write();
-  h_inv_m_LAMBDA -> Write();
-
-  h_decay_length -> Write();
-
-  h_K_DCA_r       -> Write();
-  h_K_obj_DCA_r   -> Write();
-  h_K_diff_DCA_r  -> Write();
-
-  // h2_TOF_nsigma_K_vs_PI  -> Write();
-  h2_TPC_nsigma_K_vs_PI  -> Write();
-  // h2_TOF_nsigma_K_vs_PRO -> Write();
-  h2_TPC_nsigma_K_vs_PRO -> Write();
-
-  // h_PHI_decay_length     -> Write();
-  // h_dip_angle   -> Write();
+  hist_pt_y_kaonPlus->GetXaxis()->SetTitle("y");
+  hist_pt_y_kaonPlus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_pt_y_kaonMinus->GetXaxis()->SetTitle("y");
+  hist_pt_y_kaonMinus->GetYaxis()->SetTitle("p_{T} [GeV/c]");
+  hist_Vz_pri->GetXaxis()->SetTitle("V_{Z} [cm]");
+  hist_Vz_pri->GetYaxis()->SetTitle("# of events");
+  hist_VyVx_pri->GetXaxis()->SetTitle("V_{X} [cm]");
+  hist_VyVx_pri->GetYaxis()->SetTitle("V_{Y} [cm]");
+  hist_Vr_pri->GetXaxis()->SetTitle("V_{R} [cm]");
+  hist_Vr_pri->GetYaxis()->SetTitle("# of events");
 }
-//============================= End Main Function  ===============================================
