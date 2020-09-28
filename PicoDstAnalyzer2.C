@@ -503,4 +503,6 @@ void PicoDstAnalyzer2(
   hist_VyVx_pri->GetYaxis()->SetTitle("V_{Y} [cm]");
   hist_Vr_pri->GetXaxis()->SetTitle("V_{R} [cm]");
   hist_Vr_pri->GetYaxis()->SetTitle("# of events");
+  outputFile->cd();
+  outputFile->Write();
 }
