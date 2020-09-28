@@ -242,9 +242,9 @@ void PicoDstAnalyzer2(
       if(!picoTrack->isPrimary()) continue;
       nFXTMult++;
       StPicoBTofPidTraits *trait = NULL;
-      double        d_tofBeta    = -999.;
+      double        tofBeta    = -999.;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
-      if(trait)        d_tofBeta = trait->btofBeta();
+      if(trait)        tofBeta = trait->btofBeta();
       double d_px  = picoTrack->pMom().x();
       double d_py  = picoTrack->pMom().y();
       double d_pz  = picoTrack->pMom().z();
@@ -252,7 +252,7 @@ void PicoDstAnalyzer2(
       double d_mom = sqrt(d_pT*d_pT + d_pz*d_pz);
       hist_pT   ->Fill(d_pT);
       hist_mom  ->Fill(d_mom);
-      double mass2 = d_mom*d_mom*((1.0/(d_tofBeta*d_tofBeta))-1.0);
+      double mass2 = d_mom*d_mom*((1.0/(tofBeta*tofBeta))-1.0);
       bool    b_bad_dEdx     = (picoTrack->nHitsDedx() <= 0);
       bool    b_bad_tracking = (((double)picoTrack->nHitsFit() / (double)picoTrack->nHitsPoss()) < 0.45); // loose cut
       bool b_not_enough_hits = ((double)picoTrack->nHitsFit()) < 10; // loose cut 15;
@@ -262,7 +262,7 @@ void PicoDstAnalyzer2(
       h2_dEdx_All_pq->Fill(d_mom/(picoTrack->charge()),picoTrack->dEdx());
       nGoodTracks++; // nGoodTracks is used to determine centrality later in the event loop
       vGoodTracks.push_back(picoTrack);
-      if(d_tofBeta == -999) continue;
+      if(tofBeta == -999) continue;
       h2_m2_QA_pq   ->Fill(d_mom/(picoTrack->charge()),mass2);
       h2_m2_QA_pT   ->Fill(d_pT/(picoTrack->charge()),mass2);
     }
@@ -274,20 +274,20 @@ void PicoDstAnalyzer2(
     for(unsigned int iTrk=0; iTrk<vGoodTracks.size();iTrk++){
       StPicoTrack* picoTrack = vGoodTracks[iTrk];
       StPicoBTofPidTraits *trait        = NULL;
-      Short_t trk_charge;
+      Short_t charge;
       Double_t d_pt,d_px,d_py,d_pz,d_pT,d_ptot;
-      Double_t mass2 =-999.0,d_tofBeta =-999.0;
+      Double_t mass2 =-999.0,tofBeta =-999.0;
       Double_t energyProton,energyKaon,energyPion,rapProton,rapKaon,rapPion,mtProton,mtKaon,mtPion;
       if(picoTrack->isTofTrack()) trait = dst->btofPidTraits( picoTrack->bTofPidTraitsIndex() );
-      if(trait) d_tofBeta    = trait->btofBeta();
-      trk_charge = picoTrack->charge();
+      if(trait) tofBeta    = trait->btofBeta();
+      charge = picoTrack->charge();
       d_px     = picoTrack->pMom().x();
       d_py     = picoTrack->pMom().y();
       d_pz     = picoTrack->pMom().z();
       d_pT     = picoTrack->pPt();
       d_ptot   = sqrt(d_pT*d_pT + d_pz*d_pz);
 
-      if(d_tofBeta != -999.0) mass2 = d_ptot * d_ptot *( ( 1.0 / ( d_tofBeta*d_tofBeta ) ) - 1.0 );
+      if(tofBeta != -999.0) mass2 = d_ptot * d_ptot *( ( 1.0 / ( tofBeta*tofBeta ) ) - 1.0 );
       Int_t particleType = -999; //default -999. 0,1,2,3,4 indicate p, K+, K-, \Pi+, \Pi-
       energyProton = TMath::Sqrt(d_ptot*d_ptot + _massProton*_massProton);
       energyKaon = TMath::Sqrt(d_ptot*d_ptot + _massKaon*_massKaon);
@@ -298,8 +298,8 @@ void PicoDstAnalyzer2(
       mtProton   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
       mtKaon   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
       mtPion   = TMath::Sqrt(d_pT*d_pT + _massProton*_massProton);
-      h2_dEdxVsPq->Fill(trk_charge*d_ptot,picoTrack->dEdx());
-      h2_dEdxVspTq->Fill(trk_charge*d_pT,picoTrack->dEdx());
+      h2_dEdxVsPq->Fill(charge*d_ptot,picoTrack->dEdx());
+      h2_dEdxVspTq->Fill(charge*d_pT,picoTrack->dEdx());
       double d_TPCnSigmaElectron = fabs(picoTrack->nSigmaElectron());
       double d_TPCnSigmaPion   = fabs(picoTrack->nSigmaPion());
       double d_TPCnSigmaProton = fabs(picoTrack->nSigmaProton());
@@ -316,39 +316,39 @@ void PicoDstAnalyzer2(
       if( // Proton PID: require both TPC and TOF
         TMath::Abs(picoTrack->nSigmaProton()) < 2.0 &&
         tofBeta != -999.0 && mass2 > 0.7 && mass2 < 1.1 &&
-        pt > 0.2 &&
+        d_pT > 0.2 &&
         charge > 0
       ){
         particleType=0;// Proton
         // nProtons++;
         // // Fill histograms
-        // hist_pt_proton->Fill(pt);
+        // hist_pt_proton->Fill(d_pT);
         // hist_eta_proton->Fill(eta);
         // hist_y_proton->Fill(rapProton);
         // hist_phi_proton->Fill(phi);
         // hist_rap_eta_proton->Fill(eta,rapProton);
-        // hist_pt_y_proton->Fill(rapProton,pt,1);
-        // hist_pt_eta_proton->Fill(eta,pt,1);
+        // hist_pt_y_proton->Fill(rapProton,d_pT,1);
+        // hist_pt_eta_proton->Fill(eta,d_pT,1);
         // hist_dEdx_proton->Fill(charge*ptot,picoTrack->dEdx());
         // hist_beta_proton->Fill(charge*ptot,1.0/tofBeta);
         // hist_mass_proton->Fill(charge*ptot,mass2);
       } else if( // Kaons PID: require both TPC and TOF
         TMath::Abs(picoTrack->nSigmaKaon()) < d_nSigmaKaonCut &&
         tofBeta != -999.0 && mass2 > d_KaonM2low && mass2 < d_KaonM2high
-        && pt > d_KaonpTlow
+        && d_pT > d_KaonpTlow
       ){
         if(charge > 0){
           particleType=1;// K+
           // nKaonPlus++;
           // v_KaonPlus_tracks.push_back(picoTrack); // push back K+ tracks
           // // Fill histograms
-          // hist_pt_kaonPlus->Fill(pt);
+          // hist_pt_kaonPlus->Fill(d_pT);
           // hist_eta_kaonPlus->Fill(eta);
           // hist_y_kaonPlus->Fill(rapKaon);
           // hist_phi_kaonPlus->Fill(phi);
           // hist_rap_eta_kaonPlus->Fill(eta,rapKaon);
-          // hist_pt_y_kaonPlus->Fill(rapKaon,pt,1);
-          // hist_pt_eta_kaonPlus->Fill(eta,pt,1);
+          // hist_pt_y_kaonPlus->Fill(rapKaon,d_pT,1);
+          // hist_pt_eta_kaonPlus->Fill(eta,d_pT,1);
           // hist_dEdx_kaonPlus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_kaonPlus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_kaonPlus->Fill(charge*ptot,mass2);
@@ -357,13 +357,13 @@ void PicoDstAnalyzer2(
           // nKaonMinus++;
           // v_KaonMinus_tracks.push_back(picoTrack); // push back K+ tracks
           // // Fill histograms
-          // hist_pt_kaonMinus->Fill(pt);
+          // hist_pt_kaonMinus->Fill(d_pT);
           // hist_eta_kaonMinus->Fill(eta);
           // hist_y_kaonMinus->Fill(rapKaon);
           // hist_phi_kaonMinus->Fill(phi);
           // hist_rap_eta_kaonMinus->Fill(eta,rapKaon);
-          // hist_pt_y_kaonMinus->Fill(rapKaon,pt,1);
-          // hist_pt_eta_kaonMinus->Fill(eta,pt,1);
+          // hist_pt_y_kaonMinus->Fill(rapKaon,d_pT,1);
+          // hist_pt_eta_kaonMinus->Fill(eta,d_pT,1);
           // hist_dEdx_kaonMinus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_kaonMinus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_kaonMinus->Fill(charge*ptot,mass2);
@@ -371,20 +371,20 @@ void PicoDstAnalyzer2(
       } else if( // Pions PID: require both TPC and TOF
         TMath::Abs(picoTrack->nSigmaPion()) <  2.0 &&
         tofBeta != -999.0 && mass2 > -0.01 && mass2 < 0.05 &&
-        pt > 0.2  &&
+        d_pT > 0.2  &&
         !(TMath::Abs(mass2)<0.005 && ptot<0.25) // Remove electron influence
       ){
         if(charge > 0){
           particleType=3;// \Pi+
           // nPionPlus++;
           // // Fill histograms
-          // hist_pt_pionPlus->Fill(pt);
+          // hist_pt_pionPlus->Fill(d_pT);
           // hist_eta_pionPlus->Fill(eta);
           // hist_y_pionPlus->Fill(rapPion);
           // hist_phi_pionPlus->Fill(phi);
           // hist_rap_eta_pionPlus->Fill(eta,rapPion);
-          // hist_pt_y_pionPlus->Fill(rapPion,pt,1);
-          // hist_pt_eta_pionPlus->Fill(eta,pt,1);
+          // hist_pt_y_pionPlus->Fill(rapPion,d_pT,1);
+          // hist_pt_eta_pionPlus->Fill(eta,d_pT,1);
           // hist_dEdx_pionPlus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_pionPlus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_pionPlus->Fill(charge*ptot,mass2);
@@ -392,13 +392,13 @@ void PicoDstAnalyzer2(
           particleType=4;// \Pi-
           // nPionMinus++;
           // // Fill histograms
-          // hist_pt_pionMinus->Fill(pt);
+          // hist_pt_pionMinus->Fill(d_pT);
           // hist_eta_pionMinus->Fill(eta);
           // hist_y_pionMinus->Fill(rapPion);
           // hist_phi_pionMinus->Fill(phi);
           // hist_rap_eta_pionMinus->Fill(eta,rapPion);
-          // hist_pt_y_pionMinus->Fill(rapPion,pt,1);
-          // hist_pt_eta_pionMinus->Fill(eta,pt,1);
+          // hist_pt_y_pionMinus->Fill(rapPion,d_pT,1);
+          // hist_pt_eta_pionMinus->Fill(eta,d_pT,1);
           // hist_dEdx_pionMinus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_pionMinus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_pionMinus->Fill(charge*ptot,mass2);
@@ -414,20 +414,20 @@ void PicoDstAnalyzer2(
         TMath::Abs(picoTrack->nSigmaKaon()) < TMath::Abs(picoTrack->nSigmaPion()) &&
         TMath::Abs(picoTrack->nSigmaKaon()) < TMath::Abs(picoTrack->nSigmaProton()) &&
         tofBeta == -999.0
-        && pt > d_KaonpTlow
+        && d_pT > d_KaonpTlow
       ){
         if(charge > 0){
           particleType=1;// K+
           // nKaonPlus++;
           // v_KaonPlus_tracks.push_back(picoTrack); // push back K+ tracks
           // // Fill histograms
-          // hist_pt_kaonPlus->Fill(pt);
+          // hist_pt_kaonPlus->Fill(d_pT);
           // hist_eta_kaonPlus->Fill(eta);
           // hist_y_kaonPlus->Fill(rapKaon);
           // hist_phi_kaonPlus->Fill(phi);
           // hist_rap_eta_kaonPlus->Fill(eta,rapKaon);
-          // hist_pt_y_kaonPlus->Fill(rapKaon,pt,1);
-          // hist_pt_eta_kaonPlus->Fill(eta,pt,1);
+          // hist_pt_y_kaonPlus->Fill(rapKaon,d_pT,1);
+          // hist_pt_eta_kaonPlus->Fill(eta,d_pT,1);
           // hist_dEdx_kaonPlus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_kaonPlus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_kaonPlus->Fill(charge*ptot,mass2);
@@ -436,13 +436,13 @@ void PicoDstAnalyzer2(
           nKaonMinus++;
           // v_KaonMinus_tracks.push_back(picoTrack); // push back K+ tracks
           // // Fill histograms
-          // hist_pt_kaonMinus->Fill(pt);
+          // hist_pt_kaonMinus->Fill(d_pT);
           // hist_eta_kaonMinus->Fill(eta);
           // hist_y_kaonMinus->Fill(rapKaon);
           // hist_phi_kaonMinus->Fill(phi);
           // hist_rap_eta_kaonMinus->Fill(eta,rapKaon);
-          // hist_pt_y_kaonMinus->Fill(rapKaon,pt,1);
-          // hist_pt_eta_kaonMinus->Fill(eta,pt,1);
+          // hist_pt_y_kaonMinus->Fill(rapKaon,d_pT,1);
+          // hist_pt_eta_kaonMinus->Fill(eta,d_pT,1);
           // hist_dEdx_kaonMinus->Fill(charge*ptot,picoTrack->dEdx());
           // hist_beta_kaonMinus->Fill(charge*ptot,1.0/tofBeta);
           // hist_mass_kaonMinus->Fill(charge*ptot,mass2);
@@ -456,7 +456,7 @@ void PicoDstAnalyzer2(
       } else if(particleType == 2){
         hist_pt_y_kaonMinus->Fill(d_y_K,d_pT0);
       }
-      if(d_charge < 0)      Kaoninfo.b_pos_charge = false;
+      if(charge < 0)      Kaoninfo.b_pos_charge = false;
       else                  Kaoninfo.b_pos_charge = true;
       Kaoninfo.b_bad_TOF = b_bad_ToF ;
 
@@ -475,7 +475,7 @@ void PicoDstAnalyzer2(
       Kaoninfo.r_vtx = sqrt(pow(d_xvtx,2)+pow(d_yvtx+2,2));
       Kaoninfo.DCA_r = picoTrack->gDCA(d_xvtx,d_yvtx,d_zvtx);
 
-      Kaoninfo.tofBeta = d_tofBeta;
+      Kaoninfo.tofBeta = tofBeta;
       Kaoninfo.mass2 = mass2;
 
       Kaoninfo.nHitsDedx = d_dEdx;
