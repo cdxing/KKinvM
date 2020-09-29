@@ -304,7 +304,7 @@ void ReadKaonTTree( string FileName,
   double centSetA[5]  = {0, 10, 40, 60, 80}; // %
   double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
   // Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
-  unsigned int cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
+  Int_t cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
   // pt SetA, cent SetA
   TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
   TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
@@ -773,7 +773,7 @@ void ReadKaonTTree( string FileName,
     unsigned int i_runNumber0   = t_K-> GetLeaf("runNumber")->GetValue(0);
     unsigned int i_eventNumber0 = t_K-> GetLeaf("eventNumber")->GetValue(0);
     unsigned int nGoodTracks0   = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-    unsigned int nFXTMult0      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
+    int nFXTMult0      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
 
     double px0                  = t_K-> GetLeaf("px")->GetValue(0);
     double py0                  = t_K-> GetLeaf("py")->GetValue(0);
@@ -842,7 +842,7 @@ void ReadKaonTTree( string FileName,
       unsigned int i_runNumber1   = t_K-> GetLeaf("runNumber")->GetValue(0);
       unsigned int i_eventNumber1 = t_K-> GetLeaf("eventNumber")->GetValue(0);
       unsigned int nGoodTracks1   = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-      unsigned int nFXTMult1      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
+      int nFXTMult1      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
 
       double px1                  = t_K-> GetLeaf("px")->GetValue(0);
       double py1                  = t_K-> GetLeaf("py")->GetValue(0);
