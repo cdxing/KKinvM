@@ -8,6 +8,10 @@
   * \Upadate to analyze 26p5_FXT_2018 data, new centrality def, new kaon TTree
   * \author Ding Chen
   * \date Jun 29, 2020
+  *
+  * \Update to do the systematic analysis 26p5_FXT_2018
+  * \author Ding Chen
+  * \date Sep 28, 2020
   */
 
 // C++ classes
@@ -72,6 +76,7 @@ struct st_track // Useful Physics information of a track (from kaon TTree)
   int   runNumber;
   int   eventNumber;
   int   nGoodTracks;
+  int   nFXTMult;
 
   double  px;
   double  py;
@@ -80,10 +85,16 @@ struct st_track // Useful Physics information of a track (from kaon TTree)
   double  x_vtx;
   double  y_vtx;
   double  z_vtx;
+  double  r_vtx;
+  double  DCA_r;
 
   double  tofBeta;
-  // double  dEdx;
-  double  DCA_r;
+  double  mass2;
+
+  double  nHitsDedx;
+  double  nHitsFit;
+  double  nHitsRatio;
+
   double  d_TPCnSigmaKaon;
   double  d_TOFnSigmaKaon;
 };
@@ -97,7 +108,10 @@ TChain * t_K   = new TChain("t_K");
 // =============================== (2) Analysis Start ==========================
 void ReadKaonTTree( string FileName,
                    TString outFile = "test",
-                    double inputParameter1 = 0.
+                    // double inputParameter1 = 0.
+                    Int_t   inputp2 = 0, // sysErr cut Indexes 0-15
+                    Int_t   inputp3 = 0, // sysErr cut variations, each systematic check has 2 or 3 vertions
+                    Int_t   inputp4 = 0 // Iteration of the analysis is. In this analysis, 2 iterations is enough
 ){
   // ----------------------------- read TTree ----------------------------------
   if( FileName.find(".list") != string::npos ||
@@ -131,14 +145,130 @@ void ReadKaonTTree( string FileName,
   }
   if( t_K->GetEntries() == 0 ){cout << "Error:Could not find 't_K' in file: " << FileName << endl; return;}
 
+  Int_t sys_cutN = inputp2; // sysErr cut Indexes 0-15
+  Int_t sys_varN = inputp3; // sysErr cut variations, each systematic check has 2 or 3 vertions
+  Int_t sys_iterN = inputp4; // Iteration of the analysis is. In this analysis, 2 iterations is enough
+  string sys_object[17]  = {"primary", "etaGap", "etaRange",
+                            "vz", "vr", "dedx", "dca",
+                            "nHitsFit", "ratio", "nSigK", "mass2",
+                            "pT", "dipAngle", "vtxDiff", "mthdDiff",
+                            "binning",
+                            "TPCpid"};
+  std::cout << "sys_cutN == "<< sys_cutN <<": "<< sys_object[sys_cutN] << std::endl;
+  // systematic cut Levels
+  double d_zvtxCutLvlLow,d_zvtxCutLvlHigh,d_rvtxCutLvl,d_nHitsDedxCutLvl,d_DCACutLvl,d_nHitsFitCutLvl,d_ratioCutLvl;
+  double d_nSigmaKaonCutLvl,d_KaonM2CutLvllow,d_KaonM2CutLvlHigh,d_KaonpTCutLvlLow;
+  double d_dipAngleCutLvl,d_vtxDiffCutLvl;
+  bool b_TPCpid = false;
+  // default cut level - primary
+  d_zvtxCutLvlLow = 198.0, d_zvtxCutLvlHigh = 202.0;
+  d_rvtxCutLvl = 2.0;
+  d_nHitsDedxCutLvl = 0;
+  d_DCACutLvl = 3.0;
+  d_nHitsFitCutLvl = 15;
+  d_ratioCutLvl = 0.51;
+  d_nSigmaKaonCutLvl=2.0, d_KaonM2CutLvllow=0.16,d_KaonM2CutLvlHigh=0.32, d_KaonpTCutLvlLow=0.2 ;
+  d_dipAngleCutLvl=0.04,d_vtxDiffCutLvl=0.5;
+  // # Systematic Analysis
+  if(sys_cutN == 3){
+    // sys_cutN == 3; // vz
+    if(sys_varN == 1){
+      d_zvtxCutLvlLow = 198.4, d_zvtxCutLvlHigh = 201.6;
+    } else if(sys_varN == 2){
+      d_zvtxCutLvlLow = 197.6, d_zvtxCutLvlHigh = 202.4;
+    }
+  } else if(sys_cutN == 4){
+    // sys_cutN == 4; // vr
+    if(sys_varN == 1){
+      d_rvtxCutLvl = 1.6;
+    } else if(sys_varN == 2){
+      d_rvtxCutLvl = 2.4;
+    }
+  } else if(sys_cutN == 5){
+    // sys_cutN == 5; // dedx
+    if(sys_varN == 1){
+      d_nHitsDedxCutLvl = 10;
+    } else if(sys_varN == 2){
+      d_nHitsDedxCutLvl = 20;
+    }
+  } else if(sys_cutN == 6){
+    // sys_cutN == 6; // dca
+    if(sys_varN == 1){
+      d_DCACutLvl = 1.0;
+    } else if(sys_varN == 2){
+      d_DCACutLvl = -999.0;
+       // no DCA cut
+    }
+  } else if(sys_cutN == 7){
+    // sys_cutN == 7; // nHitsFit
+    if(sys_varN == 1){
+      d_nHitsFitCutLvl = 10;
+    } else if(sys_varN == 2){
+      d_nHitsFitCutLvl = 20;
+    }
+  } else if(sys_cutN == 8){
+    // sys_cutN == 8; // ratio
+    if(sys_varN == 1){
+      d_ratioCutLvl = 0.45;
+    } else if(sys_varN == 2){
+      d_ratioCutLvl = 0.55;
+    }
+  } else if(sys_cutN == 9){
+    // sys_cutN == 9; // nSigmaKaon
+    if(sys_varN == 1){
+      d_nSigmaKaonCutLvl = 1.8;
+    } else if(sys_varN == 2){
+      d_nSigmaKaonCutLvl = 2.2;
+    }
+  } else if(sys_cutN == 10){
+    // sys_cutN == 10; // Mass2
+    if(sys_varN == 1){
+      d_KaonM2CutLvllow     = 0.17;
+      d_KaonM2CutLvlHigh    = 0.31;
+    } else if(sys_varN == 2){
+      d_KaonM2CutLvllow     = 0.15;
+      d_KaonM2CutLvlHigh    = 0.33;
+    }
+  } else if(sys_cutN == 11){
+    // sys_cutN == 11; // pTlow
+    if(sys_varN == 1){
+      d_KaonpTCutLvlLow     = 0.0;
+    } else if(sys_varN == 2){
+      d_KaonpTCutLvlLow     = 0.4;
+    }
+  } else if(sys_cutN == 12){
+    // sys_cutN == 12; // dip angle
+    d_dipAngleCutLvl = 0.0; // no dip angle cut
+  } else if(sys_cutN == 13){
+    // sys_cutN == 13; // vtxDiff
+    if(sys_varN == 1){
+      d_vtxDiffCutLvl     = 0.2;
+    } else if(sys_varN == 2){
+      d_vtxDiffCutLvl     = 1.0;
+    }
+  } else if(sys_cutN == 16){
+    // sys_cutN == 16; // TPCpid
+    b_TPCpid = true;
+    if(sys_varN == 0){
+      d_nSigmaKaonCut = 2.0;
+    } else if(sys_varN == 1){
+      d_nSigmaKaonCut = 3.0;
+    } else if(sys_varN == 2){
+      d_nSigmaKaonCut = 4.0;
+    }
+  }
+
   // multi job for ME using script
-  Double_t d_entryRange = inputParameter1;
+  // Double_t d_entryRange = inputParameter1;
   int N_entries = t_K -> GetEntries();
   // Get the number of entries in the TTree
 
   // int N_entries = (((d_entryRange+1)*5550) < (t_K -> GetEntries())) ? ((d_entryRange+1)*5550) :  (t_K -> GetEntries());
 
   // ---------------------------- Output file and Hists ------------------------
+  outFile.Prepend(Form("_var%d_iter%d_", sys_varN, sys_iterN));
+  outFile.Prepend(sys_object[sys_cutN]);
+  outFile.Prepend("sys_");
   outFile.Append(".readKTree.result.root");
   TFile * tf_out = new TFile(outFile,"RECREATE");
   TH1D * hist_dip_angle = new TH1D("hist_dip_angle","hist_dip_angle",1000,-1,1.0);
@@ -173,7 +303,8 @@ void ReadKaonTTree( string FileName,
 
   double centSetA[5]  = {0, 10, 40, 60, 80}; // %
   double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
-  Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
+  // Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
+  Int_t cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
   // pt SetA, cent SetA
   TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
   TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
@@ -300,31 +431,56 @@ void ReadKaonTTree( string FileName,
     t_K->GetEntry(i_entries);
     bool    b_pos_charge     = t_K-> GetLeaf("b_pos_charge")->GetValue(0);
     bool    b_bad_TOF        = t_K-> GetLeaf("b_bad_TOF")->GetValue(0);
+
     int     runNumber        = t_K-> GetLeaf("runNumber")->GetValue(0);
     int     eventNumber      = t_K-> GetLeaf("eventNumber")->GetValue(0);
     int     nGoodTracks      = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+    int     nFXTMult         = t_K-> GetLeaf("nFXTMult")->GetValue(0);
+
     double  px               = t_K-> GetLeaf("px")->GetValue(0);
     double  py               = t_K-> GetLeaf("py")->GetValue(0);
     double  pz               = t_K-> GetLeaf("pz")->GetValue(0);
+
     double  x_vtx            = t_K-> GetLeaf("x_vtx")->GetValue(0);
     double  y_vtx            = t_K-> GetLeaf("y_vtx")->GetValue(0);
     double  z_vtx            = t_K-> GetLeaf("z_vtx")->GetValue(0);
+    double  r_vtx            = t_K-> GetLeaf("r_vtx")->GetValue(0);
     double  DCA_r            = t_K-> GetLeaf("DCA_r")->GetValue(0);
+
+    double  tofBeta          = t_K-> GetLeaf("tofBeta")->GetValue(0);
+    double  mass2            = t_K-> GetLeaf("mass2")->GetValue(0);
+
+    double  nHitsDedx        = t_K-> GetLeaf("nHitsDedx")->GetValue(0);
+    double  nHitsFit         = t_K-> GetLeaf("nHitsFit")->GetValue(0);
+    double  nHitsRatio       = t_K-> GetLeaf("nHitsRatio")->GetValue(0);
+
     double  d_TPCnSigmaKaon  = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-    double  d_tofBeta        = t_K -> GetLeaf("tofBeta")->GetValue(0);
-    // double d_dEdx           = t_K -> GetLeaf("dEdx")->GetValue(0);
+    double  d_TOFnSigmaKaon  = t_K-> GetLeaf("d_TOFnSigmaKaon")->GetValue(0);
+
+    // QA cuts
+    if((z_vtx < d_zvtxCutLvlLow) || (z_vtx > d_zvtxCutLvlHigh)) continue; // sys_cutN == 3; // vz
+    if(r_vtx > d_rvtxCutLvl) continue; // sys_cutN == 4; // vr
+    if(nHitsDedx <= d_nHitsDedxCutLvl) continue; // sys_cutN == 5; // dedx
+    if(DCA_r >= d_DCACutLvl) continue; // sys_cutN == 6; // dca
+    if(nHitsFit < d_nHitsFitCutLvl) continue; // sys_cutN == 7; // nHitsFit
+    if(nHitsRatio < d_ratioCutLvl) continue; // sys_cutN == 8; // ratio
+    if(d_TPCnSigmaKaon >= d_nSigmaKaonCutLvl) continue; // sys_cutN == 9; // nSigmaKaon // sys_cutN == 16; // TPCpid
+    if(b_TPCpid == false && (mass2 <= d_KaonM2CutLvllow) || (mass2 >= d_KaonM2CutLvlHigh)) continue; // sys_cutN == 10; // Mass2
+    if(sqrt(px*px+py*py) <= d_KaonpTCutLvlLow) continue; // sys_cutN == 11; // pTlow
+    // if(d_dip_angle <= d_dipAngleCutLvl) continue; // sys_cutN == 12; // dip angle
+    // if(d_vtxDiff >= d_vtxDiffCutLvl) continue; // sys_cutN == 13; // vtxDiff
     double d_inv_tofBeta     = -999.0;
     double pT  = sqrt(px*px+py*py);
     double mom = sqrt(px*px+py*py+pz*pz);
     double E   = sqrt((px*px+py*py+pz*pz)+_d_K_m*_d_K_m);
     double y   = ((E-pz) != 0.0) ? 0.5*TMath::Log( (E + pz) / (E - pz) ) : -999.0;
     double eta = ((mom - pz) != 0.0) ? 0.5*TMath::Log( (mom + pz) / (mom - pz) ) : -999.0;
-    double mass2      = mom*mom*((1.0/(d_tofBeta*d_tofBeta))-1.0);
+    // double mass2      = mom*mom*((1.0/(tofBeta*tofBeta))-1.0);
     double d_q            = 1.;
     if(!b_pos_charge) d_q = -1.;
     double d_pq           = fabs(mom) * d_q;
-    if(d_tofBeta != 0.0){
-      d_inv_tofBeta = 1.0 / d_tofBeta;
+    if(tofBeta != 0.0){
+      d_inv_tofBeta = 1.0 / tofBeta;
       h2_TOF_beta_pq  -> Fill(d_pq,d_inv_tofBeta);
     }
     // Get physics values
@@ -350,19 +506,32 @@ void ReadKaonTTree( string FileName,
     st_track trk;
     trk.b_pos_charge    = b_pos_charge;
     trk.b_bad_TOF       = b_bad_TOF;
+
     trk.runNumber       = runNumber;
     trk.eventNumber     = eventNumber;
     trk.nGoodTracks     = nGoodTracks;
+    trk.nFXTMult        = nFXTMult;
+
     trk.px              = px;
     trk.py              = py;
     trk.pz              = pz;
+
     trk.x_vtx           = x_vtx;
     trk.y_vtx           = y_vtx;
     trk.z_vtx           = z_vtx;
+    trk.r_vtx           = r_vtx;
     trk.DCA_r           = DCA_r;
+
+    trk.tofBeta         = tofBeta;
+    trk.mass2           = mass2;
+
+    trk.nHitsDedx       = nHitsDedx;
+    trk.nHitsFit        = nHitsFit;
+    trk.nHitsRatio      = nHitsRatio;
+
     trk.d_TPCnSigmaKaon = d_TPCnSigmaKaon;
-    trk.tofBeta         = d_tofBeta;
-    // trk.dEdx            = d_dEdx;
+    trk.d_TOFnSigmaKaon = d_TOFnSigmaKaon;
+
     if(b_pos_charge){
       v_trk_pl.push_back(trk);
       hist_KaonPlus_pT->Fill(pT);
@@ -399,37 +568,53 @@ void ReadKaonTTree( string FileName,
       st_track trk0 = v_trk_pl[j]; // j-th of positive track of i-th event
       bool    b_pos_charge0    = trk0.b_pos_charge;
       bool    b_bad_TOF0       = trk0.b_bad_TOF;
+
       int     runNumber0       = trk0.runNumber;
       int     eventNumber0     = trk0.eventNumber;
       int     nGoodTracks0     = trk0.nGoodTracks;
+      int     nFXTMult0        = trk0.nFXTMult;
+
       double  px0              = trk0.px;
       double  py0              = trk0.py;
       double  pz0              = trk0.pz;
+
       double  x_vtx0           = trk0.x_vtx;
       double  y_vtx0           = trk0.y_vtx;
       double  z_vtx0           = trk0.z_vtx;
+      double  r_vtx0           = trk0.r_vtx;
       double  DCA_r0           = trk0.DCA_r;
-      double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
+
       double  d_tofBeta0       = trk0.tofBeta;
-      // double  d_dEdx0          = trk0.dEdx;
+      double  mass2_0          = trk0.mass2;
+
+      double  d_TPCnSigmaKaon0 = trk0.d_TPCnSigmaKaon;
+      double  d_TOFnSigmaKaon0 = trk0.d_TOFnSigmaKaon;
       // --------------------- (4.2) Negative track loop -----------------------
       for(unsigned int k = 0; k < v_trk_mi.size(); k++){
         st_track trk1 = v_trk_mi[k]; // k-th of positive track of i-th event
         bool    b_pos_charge1    = trk1.b_pos_charge;
         bool    b_bad_TOF1       = trk1.b_bad_TOF;
+
         int     runNumber1       = trk1.runNumber;
         int     eventNumber1     = trk1.eventNumber;
         int     nGoodTracks1     = trk1.nGoodTracks;
+        int     nFXTMult1        = trk1.nFXTMult;
+
         double  px1              = trk1.px;
         double  py1              = trk1.py;
         double  pz1              = trk1.pz;
+
         double  x_vtx1           = trk1.x_vtx;
         double  y_vtx1           = trk1.y_vtx;
         double  z_vtx1           = trk1.z_vtx;
+        double  r_vtx1           = trk1.r_vtx;
         double  DCA_r1           = trk1.DCA_r;
-        double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
+
         double  d_tofBeta1       = trk1.tofBeta;
-        // double  d_dEdx1          = trk1.dEdx;
+        double  mass2_1          = trk1.mass2;
+
+        double  d_TPCnSigmaKaon1 = trk1.d_TPCnSigmaKaon;
+        double  d_TOFnSigmaKaon1 = trk1.d_TOFnSigmaKaon;
         // K+ Variables
         double d_M0 = _d_K_m;
         double d_E0   = sqrt((px0*px0+py0*py0+pz0*pz0)+_d_K_m*_d_K_m);
@@ -451,7 +636,7 @@ void ReadKaonTTree( string FileName,
         // SE cuts
         if(runNumber0 != runNumber1) continue;
         if(eventNumber0 != eventNumber1) continue;
-        if(nGoodTracks0 != nGoodTracks1) continue;
+        if(nFXTMult0 != nFXTMult1) continue;
         // phi Variables
         double d_dip_angle = TMath::ACos((d_pT0*d_pT1+pz0*pz1) / (d_mom0*d_mom1) );
         double d_Phi_pT = sqrt(px0*px0 + py0*py0 +px1*px1 +py1+py1 + 2.*px0*px1 + 2.*py0*py1);
@@ -470,23 +655,36 @@ void ReadKaonTTree( string FileName,
         hist_SE_PhiMeson_rap ->Fill(d_phi_y);
         hist_SE_pt_y_PhiMeson ->Fill(d_phi_y,d_Phi_pT);
         // invM cut
-        if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-        if(d_dip_angle<0.04) continue; // dip-angle cut
+        // QA cuts
+        // if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
+        // if((z_vtx < d_zvtxCutLvlLow) || (z_vtx > d_zvtxCutLvlHigh)) continue; // sys_cutN == 3; // vz
+        // if(r_vtx > d_rvtxCutLvl) continue; // sys_cutN == 4; // vr
+        // if(nHitsDedx <= d_nHitsDedxCutLvl) continue; // sys_cutN == 5; // dedx
+        // if(DCA_r >= d_DCACutLvl) continue; // sys_cutN == 6; // dca
+        // if(nHitsFit < d_nHitsFitCutLvl) continue; // sys_cutN == 7; // nHitsFit
+        // if(nHitsRatio < d_ratioCutLvl) continue; // sys_cutN == 8; // ratio
+        // if(d_TPCnSigmaKaon >= d_nSigmaKaonCutLvl) continue; // sys_cutN == 9; // nSigmaKaon // sys_cutN == 16; // TPCpid
+        // if(b_TPCpid == false && (mass2 <= d_KaonM2CutLvllow) || (mass2 >= d_KaonM2CutLvlHigh)) continue; // sys_cutN == 10; // Mass2
+        // if(sqrt(px*px+py*py) <= d_KaonpTCutLvlLow) continue; // sys_cutN == 11; // pTlow
+        if(d_dip_angle < d_dipAngleCutLvl) continue; // sys_cutN == 12; // dip angle
+        // if(d_vtxDiff >= d_vtxDiffCutLvl) continue; // sys_cutN == 13; // vtxDiff
+
+        // if(d_dip_angle<0.04) continue; // dip-angle cut
         // -------------------- (4.2.1) centrality def -------------------------
         // Same Event nGoodTracks1 == nGoodTracks0
         Int_t centrality = 0;
         bool a_b_cent[_Ncentralities]={false};
-        bool b_pileup   = (nGoodTracks1 > 245);
-        bool b_low_mult = (nGoodTracks1 < 5);
-        a_b_cent[0]     = (nGoodTracks1 >= cenSection[7] && nGoodTracks1 < cenSection[8]); // 0 - 5%, cent 1
-        a_b_cent[1]     = (nGoodTracks1 >= cenSection[6] && nGoodTracks1 < cenSection[7]); // 5 - 10%, cent 2
-        a_b_cent[2]     = (nGoodTracks1 >= cenSection[5] && nGoodTracks1 < cenSection[6]); // 10 - 20%, cent 3
-        a_b_cent[3]     = (nGoodTracks1 >= cenSection[4]  && nGoodTracks1 < cenSection[5]); // 20 - 30%, cent 4
-        a_b_cent[4]     = (nGoodTracks1 >= cenSection[3]  && nGoodTracks1 < cenSection[4]); // 30 - 40%, cent 5
-        a_b_cent[5]     = (nGoodTracks1 >= cenSection[2]  && nGoodTracks1 < cenSection[3]); // 40 - 50%, cent 6
-        a_b_cent[6]     = (nGoodTracks1 >= cenSection[1]  && nGoodTracks1 < cenSection[2]); // 50 - 60%, cent 7
-        a_b_cent[7]     = (nGoodTracks1 >= cenSection[0]  && nGoodTracks1 < cenSection[1]); // 60 - 70%, cent 8
-        a_b_cent[8]     = (nGoodTracks1 >= 5  && nGoodTracks1 < cenSection[0]); // 70 - 80%, cent 9
+        bool b_pileup   = (nFXTMult1 >= 241);
+        bool b_low_mult = (nFXTMult1 < 2);
+        a_b_cent[0]     = (nFXTMult1 >= cenSection[7] && nFXTMult1 < cenSection[8]); // 0 - 5%, cent 1
+        a_b_cent[1]     = (nFXTMult1 >= cenSection[6] && nFXTMult1 < cenSection[7]); // 5 - 10%, cent 2
+        a_b_cent[2]     = (nFXTMult1 >= cenSection[5] && nFXTMult1 < cenSection[6]); // 10 - 20%, cent 3
+        a_b_cent[3]     = (nFXTMult1 >= cenSection[4]  && nFXTMult1 < cenSection[5]); // 20 - 30%, cent 4
+        a_b_cent[4]     = (nFXTMult1 >= cenSection[3]  && nFXTMult1 < cenSection[4]); // 30 - 40%, cent 5
+        a_b_cent[5]     = (nFXTMult1 >= cenSection[2]  && nFXTMult1 < cenSection[3]); // 40 - 50%, cent 6
+        a_b_cent[6]     = (nFXTMult1 >= cenSection[1]  && nFXTMult1 < cenSection[2]); // 50 - 60%, cent 7
+        a_b_cent[7]     = (nFXTMult1 >= cenSection[0]  && nFXTMult1 < cenSection[1]); // 60 - 70%, cent 8
+        a_b_cent[8]     = (nFXTMult1 >= 2  && nFXTMult1 < cenSection[0]); // 70 - 80%, cent 9
         for(int i=0;i<_Ncentralities;i++){
           if(a_b_cent[i]) centrality = i+1;
         }
@@ -570,19 +768,44 @@ void ReadKaonTTree( string FileName,
     if(( i > ((double) N_entries/2.0))&&(!b_half)) {cout<<" halfway"<<endl; b_half = true; b_quart = false;}
     t_K -> GetEntry(i);
     bool b_pos_charge0 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+    bool b_bad_TOF0    = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+
     unsigned int i_runNumber0   = t_K-> GetLeaf("runNumber")->GetValue(0);
     unsigned int i_eventNumber0 = t_K-> GetLeaf("eventNumber")->GetValue(0);
-    int    nGoodTracks0         = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-    double d_xvtx0              = t_K-> GetLeaf("x_vtx")->GetValue(0);
-    double d_yvtx0              = t_K-> GetLeaf("y_vtx")->GetValue(0);
-    double d_zvtx0              = t_K-> GetLeaf("z_vtx")->GetValue(0);
+    unsigned int nGoodTracks0   = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+    unsigned int nFXTMult0      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
+
     double px0                  = t_K-> GetLeaf("px")->GetValue(0);
     double py0                  = t_K-> GetLeaf("py")->GetValue(0);
     double pz0                  = t_K-> GetLeaf("pz")->GetValue(0);
+
+    double d_xvtx0              = t_K-> GetLeaf("x_vtx")->GetValue(0);
+    double d_yvtx0              = t_K-> GetLeaf("y_vtx")->GetValue(0);
+    double d_zvtx0              = t_K-> GetLeaf("z_vtx")->GetValue(0);
+    double d_rvtx0              = t_K-> GetLeaf("r_vtx")->GetValue(0);
+    double DCA_r0               = t_K-> GetLeaf("DCA_r")->GetValue(0);
+
     double  d_tofBeta0          = t_K-> GetLeaf("tofBeta")->GetValue(0);
-    double  DCA_r0              = t_K-> GetLeaf("DCA_r")->GetValue(0);
+    double  mass2_0             = t_K-> GetLeaf("mass2")->GetValue(0);
+
+    double nHitsDedx0           = t_K-> GetLeaf("nHitsDedx")->GetValue(0);
+    double nHitsFit0            = t_K-> GetLeaf("nHitsFit")->GetValue(0);
+    double nHitsRatio0          = t_K-> GetLeaf("nHitsRatio")->GetValue(0);
+
     double  d_TPCnSigmaKaon0    = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-    // double d_dEdx0           = t_K -> GetLeaf("dEdx")->GetValue(0);
+    double  d_TOFnSigmaKaon0    = t_K-> GetLeaf("d_TOFnSigmaKaon")->GetValue(0);
+    // QA cuts
+    if((d_zvtx0 < d_zvtxCutLvlLow) || (d_zvtx0 > d_zvtxCutLvlHigh)) continue; // sys_cutN == 3; // vz
+    if(d_rvtx0 > d_rvtxCutLvl) continue; // sys_cutN == 4; // vr
+    if(nHitsDedx0 <= d_nHitsDedxCutLvl) continue; // sys_cutN == 5; // dedx
+    if(DCA_r0 >= d_DCACutLvl) continue; // sys_cutN == 6; // dca
+    if(nHitsFit0 < d_nHitsFitCutLvl) continue; // sys_cutN == 7; // nHitsFit
+    if(nHitsRatio0 < d_ratioCutLvl) continue; // sys_cutN == 8; // ratio
+    if(d_TPCnSigmaKaon0 >= d_nSigmaKaonCutLvl) continue; // sys_cutN == 9; // nSigmaKaon // sys_cutN == 16; // TPCpid
+    if(b_TPCpid == false && (mass2_0 <= d_KaonM2CutLvllow) || (mass2_0 >= d_KaonM2CutLvlHigh)) continue; // sys_cutN == 10; // Mass2
+    if(sqrt(px0*px0+py0*py0) <= d_KaonpTCutLvlLow) continue; // sys_cutN == 11; // pTlow
+    // if(d_dip_angle <= d_dipAngleCutLvl) continue; // sys_cutN == 12; // dip angle
+    // if(d_vtxDiff >= d_vtxDiffCutLvl) continue; // sys_cutN == 13; // vtxDiff
     double d_pT0    = sqrt(px0*px0+py0*py0);
     double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
     double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
@@ -596,50 +819,85 @@ void ReadKaonTTree( string FileName,
     // K0 track event centrality
     Int_t centrality0 = 0;
     bool a_b_cent0[_Ncentralities]={false};
-    bool b_pileup0   = (nGoodTracks0 > 245);
-    bool b_low_mult0 = (nGoodTracks0 < 5);
-    a_b_cent0[0]     = (nGoodTracks0 >= cenSection[7] && nGoodTracks0 < cenSection[8]); // 0 - 5%, cent 1
-    a_b_cent0[1]     = (nGoodTracks0 >= cenSection[6] && nGoodTracks0 < cenSection[7]); // 5 - 10%, cent 2
-    a_b_cent0[2]     = (nGoodTracks0 >= cenSection[5] && nGoodTracks0 < cenSection[6]); // 10 - 20%, cent 3
-    a_b_cent0[3]     = (nGoodTracks0 >= cenSection[4]  && nGoodTracks0 < cenSection[5]); // 20 - 30%, cent 4
-    a_b_cent0[4]     = (nGoodTracks0 >= cenSection[3]  && nGoodTracks0 < cenSection[4]); // 30 - 40%, cent 5
-    a_b_cent0[5]     = (nGoodTracks0 >= cenSection[2]  && nGoodTracks0 < cenSection[3]); // 40 - 50%, cent 6
-    a_b_cent0[6]     = (nGoodTracks0 >= cenSection[1]  && nGoodTracks0 < cenSection[2]); // 50 - 60%, cent 7
-    a_b_cent0[7]     = (nGoodTracks0 >= cenSection[0]  && nGoodTracks0 < cenSection[1]); // 60 - 70%, cent 8
-    a_b_cent0[8]     = (nGoodTracks0 >= 5  && nGoodTracks0 < cenSection[0]); // 70 - 80%, cent 9
+    bool b_pileup0   = (nFXTMult0 > 241);
+    bool b_low_mult0 = (nFXTMult0 < 2);
+    a_b_cent0[0]     = (nFXTMult0 >= cenSection[7] && nFXTMult0 < cenSection[8]); // 0 - 5%, cent 1
+    a_b_cent0[1]     = (nFXTMult0 >= cenSection[6] && nFXTMult0 < cenSection[7]); // 5 - 10%, cent 2
+    a_b_cent0[2]     = (nFXTMult0 >= cenSection[5] && nFXTMult0 < cenSection[6]); // 10 - 20%, cent 3
+    a_b_cent0[3]     = (nFXTMult0 >= cenSection[4]  && nFXTMult0 < cenSection[5]); // 20 - 30%, cent 4
+    a_b_cent0[4]     = (nFXTMult0 >= cenSection[3]  && nFXTMult0 < cenSection[4]); // 30 - 40%, cent 5
+    a_b_cent0[5]     = (nFXTMult0 >= cenSection[2]  && nFXTMult0 < cenSection[3]); // 40 - 50%, cent 6
+    a_b_cent0[6]     = (nFXTMult0 >= cenSection[1]  && nFXTMult0 < cenSection[2]); // 50 - 60%, cent 7
+    a_b_cent0[7]     = (nFXTMult0 >= cenSection[0]  && nFXTMult0 < cenSection[1]); // 60 - 70%, cent 8
+    a_b_cent0[8]     = (nFXTMult0 >= 2  && nFXTMult0 < cenSection[0]); // 70 - 80%, cent 9
     for(int i=0;i<_Ncentralities;i++){
       if(a_b_cent0[i]) centrality0 = i+1;
     }
     // ====================== (5.1) Mixed Event K- loop ========================
     for(int j=j_start;j<N_entries;j++){
       t_K -> GetEntry(j);
-      double                         d_xvtx1 = t_K -> GetLeaf("x_vtx")->GetValue(0);
-      double                         d_yvtx1 = t_K -> GetLeaf("y_vtx")->GetValue(0);
-      double                         d_zvtx1 = t_K -> GetLeaf("z_vtx")->GetValue(0);
-      unsigned int            i_runNumber1   = t_K -> GetLeaf("runNumber")->GetValue(0);
-      unsigned int            i_eventNumber1 = t_K -> GetLeaf("eventNumber")->GetValue(0);
+      bool b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+      bool b_bad_TOF1    = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
+
+      unsigned int i_runNumber1   = t_K-> GetLeaf("runNumber")->GetValue(0);
+      unsigned int i_eventNumber1 = t_K-> GetLeaf("eventNumber")->GetValue(0);
+      unsigned int nGoodTracks1   = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
+      unsigned int nFXTMult1      = t_K-> GetLeaf("nFXTMult")->GetValue(0);
+
+      double px1                  = t_K-> GetLeaf("px")->GetValue(0);
+      double py1                  = t_K-> GetLeaf("py")->GetValue(0);
+      double pz1                  = t_K-> GetLeaf("pz")->GetValue(0);
+
+      double d_xvtx1              = t_K-> GetLeaf("x_vtx")->GetValue(0);
+      double d_yvtx1              = t_K-> GetLeaf("y_vtx")->GetValue(0);
+      double d_zvtx1              = t_K-> GetLeaf("z_vtx")->GetValue(0);
+      double d_rvtx1              = t_K-> GetLeaf("r_vtx")->GetValue(0);
+      double DCA_r1               = t_K-> GetLeaf("DCA_r")->GetValue(0);
+
+      double  d_tofBeta1          = t_K-> GetLeaf("tofBeta")->GetValue(0);
+      double  mass2_1             = t_K-> GetLeaf("mass2")->GetValue(0);
+
+      double nHitsDedx1           = t_K-> GetLeaf("nHitsDedx")->GetValue(0);
+      double nHitsFit1            = t_K-> GetLeaf("nHitsFit")->GetValue(0);
+      double nHitsRatio1          = t_K-> GetLeaf("nHitsRatio")->GetValue(0);
+
+      double  d_TPCnSigmaKaon1    = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
+      double  d_TOFnSigmaKaon1    = t_K-> GetLeaf("d_TOFnSigmaKaon")->GetValue(0);
+
+      // QA cuts
+      if((d_zvtx1 < d_zvtxCutLvlLow) || (d_zvtx1 > d_zvtxCutLvlHigh)) continue; // sys_cutN == 3; // vz
+      if(d_rvtx1 > d_rvtxCutLvl) continue; // sys_cutN == 4; // vr
+      if(nHitsDedx1 <= d_nHitsDedxCutLvl) continue; // sys_cutN == 5; // dedx
+      if(DCA_r1 >= d_DCACutLvl) continue; // sys_cutN == 6; // dca
+      if(nHitsFit1 < d_nHitsFitCutLvl) continue; // sys_cutN == 7; // nHitsFit
+      if(nHitsRatio1 < d_ratioCutLvl) continue; // sys_cutN == 8; // ratio
+      if(d_TPCnSigmaKaon1 >= d_nSigmaKaonCutLvl) continue; // sys_cutN == 9; // nSigmaKaon // sys_cutN == 16; // TPCpid
+      if(b_TPCpid == false && (mass2_1 <= d_KaonM2CutLvllow) || (mass2_1 >= d_KaonM2CutLvlHigh)) continue; // sys_cutN == 10; // Mass2
+      if(sqrt(px1*px1+py1*py1) <= d_KaonpTCutLvlLow) continue; // sys_cutN == 11; // pTlow
+      // if(d_dip_angle <= d_dipAngleCutLvl) continue; // sys_cutN == 12; // dip angle
+      // if(d_vtxDiff >= d_vtxDiffCutLvl) continue; // sys_cutN == 13; // vtxDiff
+
       unsigned long long event_pl_runnumber1 = (i_runNumber1-19150000)*10000000+i_eventNumber1;
-      int                   nGoodTracks1     = t_K-> GetLeaf("nGoodTracks")->GetValue(0);
-      bool                     b_pos_charge1 = t_K -> GetLeaf("b_pos_charge")->GetValue(0);
       if(event_pl_runnumber0 == event_pl_runnumber1) continue; // skip SE
       if(b_found_mixed_evt && (event_pl_runnumber1 != this_mixed_event_pl_runnumber) && i_found_mixed_evt >= 5 ){
         break; // found 5 ME
       }
-      if(fabs(d_zvtx1 - d_zvtx0)>0.5) continue; //bad zvtx
+      if(fabs(d_zvtx1 - d_zvtx0)>d_vtxDiffCutLvl) continue; //bad zvtx
+      // if(d_vtxDiff >= d_vtxDiffCutLvl) continue; // sys_cutN == 13; // vtxDiff
       if(b_pos_charge0 == b_pos_charge1) continue; // require opposite charge +-/-+ mixed events
       Int_t centrality1 = 0;
       bool a_b_cent1[_Ncentralities]={false};
-      bool b_pileup1   = (nGoodTracks1 > 245);
-      bool b_low_mult1 = (nGoodTracks1 < 5);
-      a_b_cent1[0]     = (nGoodTracks1 >= cenSection[7] && nGoodTracks1 < cenSection[8]); // 0 - 5%, cent 1
-      a_b_cent1[1]     = (nGoodTracks1 >= cenSection[6] && nGoodTracks1 < cenSection[7]); // 5 - 10%, cent 2
-      a_b_cent1[2]     = (nGoodTracks1 >= cenSection[5] && nGoodTracks1 < cenSection[6]); // 10 - 20%, cent 3
-      a_b_cent1[3]     = (nGoodTracks1 >= cenSection[4]  && nGoodTracks1 < cenSection[5]); // 20 - 30%, cent 4
-      a_b_cent1[4]     = (nGoodTracks1 >= cenSection[3]  && nGoodTracks1 < cenSection[4]); // 30 - 40%, cent 5
-      a_b_cent1[5]     = (nGoodTracks1 >= cenSection[2]  && nGoodTracks1 < cenSection[3]); // 40 - 50%, cent 6
-      a_b_cent1[6]     = (nGoodTracks1 >= cenSection[1]  && nGoodTracks1 < cenSection[2]); // 50 - 60%, cent 7
-      a_b_cent1[7]     = (nGoodTracks1 >= cenSection[0]  && nGoodTracks1 < cenSection[1]); // 60 - 70%, cent 8
-      a_b_cent1[8]     = (nGoodTracks1 >= 5  && nGoodTracks1 < cenSection[0]); // 70 - 80%, cent 9
+      bool b_pileup1   = (nFXTMult1 > 241);
+      bool b_low_mult1 = (nFXTMult1 < 2);
+      a_b_cent1[0]     = (nFXTMult1 >= cenSection[7] && nFXTMult1 < cenSection[8]); // 0 - 5%, cent 1
+      a_b_cent1[1]     = (nFXTMult1 >= cenSection[6] && nFXTMult1 < cenSection[7]); // 5 - 10%, cent 2
+      a_b_cent1[2]     = (nFXTMult1 >= cenSection[5] && nFXTMult1 < cenSection[6]); // 10 - 20%, cent 3
+      a_b_cent1[3]     = (nFXTMult1 >= cenSection[4]  && nFXTMult1 < cenSection[5]); // 20 - 30%, cent 4
+      a_b_cent1[4]     = (nFXTMult1 >= cenSection[3]  && nFXTMult1 < cenSection[4]); // 30 - 40%, cent 5
+      a_b_cent1[5]     = (nFXTMult1 >= cenSection[2]  && nFXTMult1 < cenSection[3]); // 40 - 50%, cent 6
+      a_b_cent1[6]     = (nFXTMult1 >= cenSection[1]  && nFXTMult1 < cenSection[2]); // 50 - 60%, cent 7
+      a_b_cent1[7]     = (nFXTMult1 >= cenSection[0]  && nFXTMult1 < cenSection[1]); // 60 - 70%, cent 8
+      a_b_cent1[8]     = (nFXTMult1 >= 2  && nFXTMult1 < cenSection[0]); // 70 - 80%, cent 9
       for(int i=0;i<_Ncentralities;i++){
         if(a_b_cent1[i]) centrality1 = i+1;
       }
@@ -648,13 +906,6 @@ void ReadKaonTTree( string FileName,
       b_found_mixed_evt = true;
       i_found_mixed_evt++;
       this_mixed_event_pl_runnumber = event_pl_runnumber1;
-      double               px1 = t_K-> GetLeaf("px")->GetValue(0);
-      double               py1 = t_K-> GetLeaf("py")->GetValue(0);
-      double               pz1 = t_K-> GetLeaf("pz")->GetValue(0);
-      double  DCA_r1           = t_K-> GetLeaf("DCA_r")->GetValue(0);
-      double  d_TPCnSigmaKaon1 = t_K-> GetLeaf("d_TPCnSigmaKaon")->GetValue(0);
-      double  d_tofBeta1       = t_K-> GetLeaf("tofBeta")->GetValue(0);
-      // double d_dEdx1           = t_K -> GetLeaf("dEdx")->GetValue(0);
       double d_pT1   = sqrt(px1*px1+py1*py1);
       double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
       double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
@@ -681,7 +932,8 @@ void ReadKaonTTree( string FileName,
                              -2.0*(px0*px1+py0*py1+pz0*pz1) );
       hist_ME_mass_Phi->Fill(d_inv_m);
       if((d_inv_m <= 0.9) || (d_inv_m >= 1.1)) continue;
-      if(d_dip_angle<0.04) continue; // dip-angle cut
+      if(d_dip_angle < d_dipAngleCutLvl) continue; // dip-angle cut
+      // if(d_dip_angle < d_dipAngleCutLvl) continue; // sys_cutN == 12; // dip angle
       // -------------------- (5.1.2) Fill ME InvM plots -------------------------
       for(int pt=0; pt<2; pt++)
       {// pt SetA, cent SetA
