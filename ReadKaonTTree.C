@@ -304,7 +304,7 @@ void ReadKaonTTree( string FileName,
   double centSetA[5]  = {0, 10, 40, 60, 80}; // %
   double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
   // Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
-  unsigned Int_t cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
+  unsigned int cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
   // pt SetA, cent SetA
   TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
   TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
