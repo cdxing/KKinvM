@@ -250,11 +250,11 @@ void ReadKaonTTree( string FileName,
     // sys_cutN == 16; // TPCpid
     b_TPCpid = true;
     if(sys_varN == 0){
-      d_nSigmaKaonCut = 2.0;
+      d_nSigmaKaonCutLvl = 2.0;
     } else if(sys_varN == 1){
-      d_nSigmaKaonCut = 3.0;
+      d_nSigmaKaonCutLvl = 3.0;
     } else if(sys_varN == 2){
-      d_nSigmaKaonCut = 4.0;
+      d_nSigmaKaonCutLvl = 4.0;
     }
   }
 
@@ -304,7 +304,7 @@ void ReadKaonTTree( string FileName,
   double centSetA[5]  = {0, 10, 40, 60, 80}; // %
   double centSetB[10]  = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80}; // %
   // Int_t cenSection[_Ncentralities]={11,22,37,57,82,113,151,174,245};//10,17,28,41,57,77,100,127,160,245 version 0 cent
-  Int_t cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
+  unsigned Int_t cenSection[9]={6,12,22,39,64,100,154,191,241}; // From UC Davis, cut on nFXTMult
   // pt SetA, cent SetA
   TH1D *mHist_SE_InvM_ptSetA_centSetA[2][6];
   TH1D *mHist_ME_InvM_ptSetA_centSetA[2][6];
@@ -632,7 +632,7 @@ void ReadKaonTTree( string FileName,
         double eta1   = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
         double d_pT1  = sqrt(px1*px1+py1*py1);
         double d_mT1  = sqrt(d_pT1*d_pT1 + d_M1*d_M1);
-        double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
+        // double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
         // SE cuts
         if(runNumber0 != runNumber1) continue;
         if(eventNumber0 != eventNumber1) continue;
@@ -809,7 +809,7 @@ void ReadKaonTTree( string FileName,
     double d_pT0    = sqrt(px0*px0+py0*py0);
     double d_mom0   = sqrt(px0*px0+py0*py0+pz0*pz0);
     double eta0     = ((d_mom0 - pz0) != 0.0) ? 0.5*TMath::Log( (d_mom0 + pz0) / (d_mom0 - pz0) ) : 1.0;
-    double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
+    // double mass2_0  = d_mom0*d_mom0*((1.0/(d_tofBeta0*d_tofBeta0))-1.0);
     unsigned long long event_pl_runnumber0 = (i_runNumber0-19150000)*10000000+i_eventNumber0;
     if(event_pl_runnumber0 != pre_event_pl_runnumber) {
       j_start = i+1; // ME start from the next entry in kaon TTree
@@ -909,7 +909,7 @@ void ReadKaonTTree( string FileName,
       double d_pT1   = sqrt(px1*px1+py1*py1);
       double d_mom1  = sqrt(px1*px1+py1*py1+pz1*pz1);
       double eta1    = ((d_mom1 - pz1) != 0.0) ? 0.5*TMath::Log( (d_mom1 + pz1) / (d_mom1 - pz1) ) : 1.0;
-      double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
+      // double mass2_1 = d_mom1*d_mom1*((1.0/(d_tofBeta1*d_tofBeta1))-1.0);
 
       double d_M1  = _d_K_m;
       double d_M0  = _d_K_m;
